@@ -33,6 +33,7 @@ export function NetworkView() {
 
   /** Rate mapped to full channel width: max gross rate in this trajectory. */
   const rateScale = useMemo(() => {
+    if (!trajectory) return 0.25;
     const all = trajectory.rates.flatMap((r) => [r.forward, r.reverse]);
     return Math.max(0.25, seriesMax(all));
   }, [trajectory]);
@@ -58,6 +59,10 @@ export function NetworkView() {
   }, [model, speciesColor]);
 
   const inflowIndex = model.processes.findIndex((p) => p.kind === 'inflow');
+
+  // Rendered only while the store holds a valid result (see App.tsx); this
+  // guard keeps the invariant local and satisfies the nullable contract.
+  if (!trajectory || !frame) return null;
 
   return (
     <svg

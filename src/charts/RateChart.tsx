@@ -15,6 +15,7 @@ export function RateChart() {
   const selection = useSimulationStore((s) => s.selection);
 
   const series = useMemo<ChartSeries[]>(() => {
+    if (!trajectory) return [];
     const colorOf = (speciesId: string) =>
       `var(${model.species.find((sp) => sp.id === speciesId)?.colorVar ?? '--text-2'})`;
     const out: ChartSeries[] = [];
@@ -51,6 +52,8 @@ export function RateChart() {
     });
     return out;
   }, [model, trajectory, rateView]);
+
+  if (!trajectory) return null;
 
   return (
     <TimeSeriesChart

@@ -50,6 +50,13 @@ export function ParticleLayer({ channels, colors }: Props) {
       const dtWall = Math.min(0.1, (now - lastWall) / 1000);
       lastWall = now;
       const s = useSimulationStore.getState();
+      if (!s.trajectory) {
+        // Invalid simulation: nothing to animate; drop in-flight particles.
+        for (const lane of lanes.values()) resetLane(lane);
+        setDots([]);
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const frame = frameAt(s.trajectory, s.time);
 
       const scenarioChanged = lastTraj !== s.trajectory || lastView !== s.rateView;

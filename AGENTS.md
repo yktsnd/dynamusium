@@ -55,13 +55,22 @@ stochastic simulation, stiff-system solvers.
 
 1. Deterministic inputs produce deterministic results (no randomness anywhere
    in model/solver).
-2. Quantities remain nonnegative within `NONNEGATIVE_TOLERANCE`.
-3. Cumulative reservoir output is nondecreasing.
-4. Particle emission derives from integrated rates (see
+2. Integration returns a typed `SimulationResult`
+   (`src/solver/simulation-result.ts`): negative excursions within
+   `NONNEGATIVE_TOLERANCE` are corrected to zero and counted in diagnostics;
+   anything larger (or non-finite) aborts with a `NumericalError` — failures
+   are surfaced, never clamped away.
+3. A valid trajectory's quantities are nonnegative and its cumulative
+   reservoir output is nondecreasing; reservoir decreases beyond tolerance
+   make the result invalid instead of being masked.
+4. An invalid result is never played back or charted: the store nulls the
+   trajectory, halts playback, and the UI shows the failure until the inputs
+   change or the preset is reset.
+5. Particle emission derives from integrated rates (see
    `particle-engine.ts`); it is never arbitrary timing.
-5. Scrubbing never mutates the calculated trajectory.
-6. Changing playback speed never changes the model solution.
-7. Chart values and displayed labels derive from the same simulation frame
+6. Scrubbing never mutates the calculated trajectory.
+7. Changing playback speed never changes the model solution.
+8. Chart values and displayed labels derive from the same simulation frame
    (`frameAt`).
 
 These are encoded as tests in `tests/solver/`, `tests/state/`, and

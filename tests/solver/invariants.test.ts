@@ -3,12 +3,19 @@ import { demonstrationModel } from '../../src/model/demonstration-model.ts';
 import type { ParameterValues } from '../../src/model/schema.ts';
 import { defaultParameterValues } from '../../src/model/validation.ts';
 import { presets } from '../../src/features/presets/presets.ts';
-import { integrate } from '../../src/solver/integrate.ts';
+import { integrate, type IntegrateOptions } from '../../src/solver/integrate.ts';
 import { frameAt } from '../../src/solver/trajectory.ts';
+import type { Trajectory } from '../../src/solver/trajectory.ts';
 import {
   MASS_BALANCE_RELATIVE_TOLERANCE,
   MONOTONICITY_TOLERANCE,
 } from '../../src/solver/numerical-tolerance.ts';
+
+function integrateValid(opts: IntegrateOptions): Trajectory {
+  const r = integrate(opts);
+  if (r.status !== 'valid') throw new Error('expected valid: ' + r.error.message);
+  return r.trajectory;
+}
 
 const abIndex = demonstrationModel.processes.findIndex((p) => p.id === 'ab');
 
@@ -21,7 +28,7 @@ function totalSpeciesMass(quantities: Float64Array[], frame: number): number {
 describe('mass balance (closed system)', () => {
   it('conserves total species mass when there is no feed and no drain', () => {
     const params = { ...defaultParameterValues(demonstrationModel), kout: 0 };
-    const traj = integrate({
+    const traj = integrateValid({
       model: demonstrationModel,
       params,
       profile: { kind: 'none' },
@@ -39,7 +46,7 @@ describe('mass balance (closed system)', () => {
 
 describe('cumulative output monotonicity', () => {
   it('never lets the reservoir series decrease under a constant feed', () => {
-    const traj = integrate({
+    const traj = integrateValid({
       model: demonstrationModel,
       params: defaultParameterValues(demonstrationModel),
       profile: { kind: 'constant', rate: 0.8 },
@@ -61,14 +68,17 @@ describe('nonnegative trajectories across presets', () => {
         ...preset.paramOverrides,
       } as ParameterValues;
       const initialOverrides = { ...preset.initialOverrides };
-      const traj = integrate({
+      const result = integrate({
         model: demonstrationModel,
         params,
         profile: structuredClone(preset.profile),
         initialOverrides,
       });
 
-      expect(traj.clampViolations).toBe(0);
+      expect(result.status).toBe('valid');
+      if (result.status !== 'valid') throw new Error('expected valid: ' + result.error.message);
+      expect(result.diagnostics.smallClampCount).toBe(0);
+      const traj = result.trajectory;
       for (const series of traj.quantities) {
         for (let i = 0; i < series.length; i++) {
           expect(series[i]).toBeGreaterThanOrEqual(0);
@@ -89,8 +99,8 @@ describe('deterministic repeatability', () => {
       profile: { kind: 'constant' as const, rate: 0.8 },
       initialOverrides: { a: 5, b: 0.2, c: 0 },
     };
-    const traj1 = integrate(opts);
-    const traj2 = integrate(opts);
+    const traj1 = integrateValid(opts);
+    const traj2 = integrateValid(opts);
 
     expect(Array.from(traj1.quantities[0])).toEqual(Array.from(traj2.quantities[0]));
     expect(Array.from(traj1.quantities[1])).toEqual(Array.from(traj2.quantities[1]));
@@ -102,7 +112,7 @@ describe('deterministic repeatability', () => {
 describe('forward/reverse rate correctness', () => {
   it('computes A<->B forward and reverse rates from mass-action kinetics at t=0', () => {
     const params = { ...defaultParameterValues(demonstrationModel), kout: 0 };
-    const traj = integrate({
+    const traj = integrateValid({
       model: demonstrationModel,
       params,
       profile: { kind: 'none' },
@@ -117,7 +127,7 @@ describe('forward/reverse rate correctness', () => {
 
   it('gives a negative net rate when the reverse reaction dominates', () => {
     const params = { ...defaultParameterValues(demonstrationModel), kout: 0 };
-    const traj = integrate({
+    const traj = integrateValid({
       model: demonstrationModel,
       params,
       profile: { kind: 'none' },
@@ -132,7 +142,7 @@ describe('mass balance (open system)', () => {
   it('accumulates species plus reservoir mass equal to the fed integral', () => {
     const params = defaultParameterValues(demonstrationModel);
     const rate = 0.8;
-    const traj = integrate({
+    const traj = integrateValid({
       model: demonstrationModel,
       params,
       profile: { kind: 'constant', rate },
@@ -148,7 +158,7 @@ describe('mass balance (open system)', () => {
 });
 
 describe('frameAt interpolation', () => {
-  const traj = integrate({
+  const traj = integrateValid({
     model: demonstrationModel,
     params: defaultParameterValues(demonstrationModel),
     profile: { kind: 'constant', rate: 0.8 },

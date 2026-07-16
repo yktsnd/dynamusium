@@ -9,8 +9,12 @@ const ANNOUNCE_INTERVAL_MS = 5000;
 /** Build the current status sentence from a fresh read of the store. */
 function describeStatus(): string {
   const state = useSimulationStore.getState();
-  const { model, playing } = state;
+  const { model, playing, status, error } = state;
   const frame = selectCurrentFrame(state);
+
+  if (status === 'invalid' || frame === null) {
+    return `Simulation invalid: ${error?.message ?? 'the solver could not produce a usable solution.'} Playback is stopped. Use reset to restore the preset.`;
+  }
 
   const speciesText = model.species
     .map(

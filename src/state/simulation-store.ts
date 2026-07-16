@@ -3,18 +3,23 @@ import { demonstrationModel } from '../model/demonstration-model.ts';
 import type { InputProfile, ModelDefinition, ParameterValues, SpeciesId } from '../model/schema.ts';
 import { clampParameterValue, defaultParameterValues } from '../model/validation.ts';
 import { integrate } from '../solver/integrate.ts';
+import type { Diagnostics, NumericalError, SimulationResult } from '../solver/simulation-result.ts';
 import type { Trajectory } from '../solver/trajectory.ts';
 import { defaultPresetId, presets, type Preset } from '../features/presets/presets.ts';
 
 /**
  * Single source of truth for the running application.
  *
- * Numerical truth lives in `trajectory`, recomputed synchronously whenever
- * parameters, profile, or preset change. Playback state only selects a time
- * within it — it never mutates it.
+ * Numerical truth lives in the solver's SimulationResult, recomputed
+ * synchronously whenever parameters, profile, or preset change. A valid
+ * result carries the immutable trajectory playback indexes into; an invalid
+ * result carries the error instead — there is no trajectory to play, playback
+ * halts, and the UI must show the failure until the user resets or changes
+ * inputs.
  */
 
 export type RateView = 'net' | 'directional';
+export type SimulationStatus = SimulationResult['status'];
 
 export interface SimulationState {
   model: ModelDefinition;
@@ -22,7 +27,13 @@ export interface SimulationState {
   params: ParameterValues;
   profile: InputProfile;
   initialOverrides: Partial<Record<SpeciesId, number>>;
-  trajectory: Trajectory;
+
+  status: SimulationStatus;
+  /** Present only when status === 'valid'. */
+  trajectory: Trajectory | null;
+  /** Present only when status === 'invalid'. */
+  error: NumericalError | null;
+  diagnostics: Diagnostics;
 
   time: number;
   playing: boolean;
@@ -62,13 +73,34 @@ function presetById(id: string): Preset {
   return presets.find((p) => p.id === id) ?? presets[0];
 }
 
-function computeTrajectory(
+function computeResult(
   model: ModelDefinition,
   params: ParameterValues,
   profile: InputProfile,
   initialOverrides: Partial<Record<SpeciesId, number>>,
-): Trajectory {
+): SimulationResult {
   return integrate({ model, params, profile, initialOverrides });
+}
+
+/** Store fields derived from a fresh SimulationResult. Halts playback on failure. */
+function applyResult(result: SimulationResult, previousTime = 0) {
+  if (result.status === 'valid') {
+    return {
+      status: 'valid' as const,
+      trajectory: result.trajectory,
+      error: null,
+      diagnostics: result.diagnostics,
+      time: Math.min(previousTime, result.trajectory.duration),
+    };
+  }
+  return {
+    status: 'invalid' as const,
+    trajectory: null,
+    error: result.error,
+    diagnostics: result.diagnostics,
+    time: 0,
+    playing: false,
+  };
 }
 
 function presetScenario(model: ModelDefinition, preset: Preset) {
@@ -80,20 +112,20 @@ function presetScenario(model: ModelDefinition, preset: Preset) {
 
 const initialPreset = presetById(defaultPresetId);
 const initialScenario = presetScenario(demonstrationModel, initialPreset);
+const initialResult = computeResult(
+  demonstrationModel,
+  initialScenario.params,
+  initialScenario.profile,
+  initialScenario.initialOverrides,
+);
 
 export const useSimulationStore = create<SimulationState>((set, get) => ({
   model: demonstrationModel,
   presetId: initialPreset.id,
   ...initialScenario,
-  trajectory: computeTrajectory(
-    demonstrationModel,
-    initialScenario.params,
-    initialScenario.profile,
-    initialScenario.initialOverrides,
-  ),
+  ...applyResult(initialResult),
 
-  time: 0,
-  playing: true,
+  playing: initialResult.status === 'valid',
   speed: 1,
 
   selection: null,
@@ -106,29 +138,29 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   selectPreset: (id) => {
     const { model } = get();
     const scenario = presetScenario(model, presetById(id));
+    const result = computeResult(
+      model,
+      scenario.params,
+      scenario.profile,
+      scenario.initialOverrides,
+    );
     set({
       presetId: id,
       ...scenario,
-      trajectory: computeTrajectory(
-        model,
-        scenario.params,
-        scenario.profile,
-        scenario.initialOverrides,
-      ),
-      time: 0,
-      playing: true,
+      ...applyResult(result),
+      playing: result.status === 'valid',
     });
   },
 
   setParam: (id, value) => {
     const { model, params, profile, initialOverrides, time } = get();
     const next = { ...params, [id]: clampParameterValue(model, id, value) };
-    const trajectory = computeTrajectory(model, next, profile, initialOverrides);
-    set({ params: next, trajectory, time: Math.min(time, trajectory.duration) });
+    const result = computeResult(model, next, profile, initialOverrides);
+    set({ params: next, ...applyResult(result, time) });
   },
 
   setProfileKind: (kind) => {
-    const { model, params, initialOverrides, profile } = get();
+    const { model, params, initialOverrides, profile, time } = get();
     if (kind === profile.kind) return;
     const defaults: Record<InputProfile['kind'], InputProfile> = {
       none: { kind: 'none' },
@@ -137,20 +169,16 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       sine: { kind: 'sine', base: 0.7, amplitude: 0.6, period: 18 },
     };
     const next = defaults[kind];
-    set({
-      profile: next,
-      trajectory: computeTrajectory(model, params, next, initialOverrides),
-    });
+    const result = computeResult(model, params, next, initialOverrides);
+    set({ profile: next, ...applyResult(result, time) });
   },
 
   setProfileField: (key, value) => {
-    const { model, params, initialOverrides, profile } = get();
+    const { model, params, initialOverrides, profile, time } = get();
     if (profile.kind === 'none' || Number.isNaN(value)) return;
     const next = { ...profile, [key]: value } as InputProfile;
-    set({
-      profile: next,
-      trajectory: computeTrajectory(model, params, next, initialOverrides),
-    });
+    const result = computeResult(model, params, next, initialOverrides);
+    set({ profile: next, ...applyResult(result, time) });
   },
 
   resetToPresetDefaults: () => {
@@ -160,21 +188,26 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   play: () => {
     const { time, trajectory } = get();
+    if (!trajectory) return;
     // Play from the start again if we are parked at the end.
     set({ playing: true, time: time >= trajectory.duration ? 0 : time });
   },
   pause: () => set({ playing: false }),
   togglePlay: () => (get().playing ? get().pause() : get().play()),
-  restart: () => set({ time: 0, playing: true }),
+  restart: () => {
+    if (!get().trajectory) return;
+    set({ time: 0, playing: true });
+  },
 
   setTime: (t) => {
     const { trajectory } = get();
+    if (!trajectory) return;
     set({ time: Math.min(trajectory.duration, Math.max(0, t)) });
   },
 
   advance: (dtWall) => {
     const { time, speed, trajectory, playing } = get();
-    if (!playing) return;
+    if (!playing || !trajectory) return;
     const next = time + dtWall * speed;
     if (next >= trajectory.duration) {
       set({ time: trajectory.duration, playing: false });

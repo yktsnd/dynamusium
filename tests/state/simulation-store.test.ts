@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useSimulationStore } from '../../src/state/simulation-store.ts';
+import type { Trajectory } from '../../src/solver/trajectory.ts';
+
+/** Narrow a possibly-null store trajectory for tests that expect a valid run. */
+function requireTrajectory(trajectory: Trajectory | null): Trajectory {
+  if (!trajectory) throw new Error('expected a trajectory, got null (status was invalid)');
+  return trajectory;
+}
 
 beforeEach(() => {
   useSimulationStore.getState().selectPreset('steady-feed');
@@ -7,16 +14,15 @@ beforeEach(() => {
 
 describe('setParam', () => {
   it('recomputes the trajectory with new identity and new values', () => {
-    const before = useSimulationStore.getState().trajectory;
+    const before = requireTrajectory(useSimulationStore.getState().trajectory);
     useSimulationStore.getState().setParam('kf', 1.5);
     const after = useSimulationStore.getState();
+    const afterTrajectory = requireTrajectory(after.trajectory);
 
-    expect(after.trajectory).not.toBe(before);
+    expect(afterTrajectory).not.toBe(before);
     expect(after.params.kf).toBe(1.5);
     // Changing the forward rate constant must actually change the dynamics.
-    expect(Array.from(after.trajectory.quantities[1])).not.toEqual(
-      Array.from(before.quantities[1]),
-    );
+    expect(Array.from(afterTrajectory.quantities[1])).not.toEqual(Array.from(before.quantities[1]));
   });
 
   it('clamps parameter values to the declared range', () => {
@@ -30,7 +36,7 @@ describe('setParam', () => {
 
 describe('scrubbing immutability', () => {
   it('keeps the same trajectory reference while moving time back and forth', () => {
-    const trajectory = useSimulationStore.getState().trajectory;
+    const trajectory = requireTrajectory(useSimulationStore.getState().trajectory);
 
     useSimulationStore.getState().setTime(10);
     expect(useSimulationStore.getState().trajectory).toBe(trajectory);
@@ -42,7 +48,7 @@ describe('scrubbing immutability', () => {
   });
 
   it('clamps time to [0, duration]', () => {
-    const duration = useSimulationStore.getState().trajectory.duration;
+    const duration = requireTrajectory(useSimulationStore.getState().trajectory).duration;
 
     useSimulationStore.getState().setTime(-5);
     expect(useSimulationStore.getState().time).toBe(0);
@@ -73,7 +79,7 @@ describe('selectPreset', () => {
     const state = useSimulationStore.getState();
 
     expect(state.params.kout).toBe(0);
-    expect(state.trajectory.quantities[0][0]).toBe(5);
+    expect(requireTrajectory(state.trajectory).quantities[0][0]).toBe(5);
   });
 });
 

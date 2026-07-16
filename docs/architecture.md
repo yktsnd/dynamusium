@@ -7,9 +7,15 @@ this document does not repeat it.
 ## Data flow
 
 A model definition, the current parameter values, and an input profile are
-compiled into an ODE system and integrated once into an immutable
-`Trajectory`. Every view — the network, both charts, and the readouts — reads
-from that same object; playback only selects a time within it.
+compiled into an ODE system and integrated once into a typed
+`SimulationResult` (`src/solver/simulation-result.ts`) — either a `valid`
+result carrying an immutable `Trajectory`, or an `invalid` result carrying a
+`NumericalError`, in both cases alongside `Diagnostics`. The store applies
+that result: on `valid`, every view — the network, both charts, and the
+readouts — reads from the same `Trajectory` object, and playback only selects
+a time within it; on `invalid`, there is no trajectory, playback halts, and
+the UI renders the failure instead of the network and charts (see "Invalid
+results" below).
 
 ```mermaid
 flowchart LR
@@ -17,12 +23,15 @@ flowchart LR
     P[ParameterValues] --> C
     F[InputProfile] --> C
     C --> I[integrate: RK4]
-    I --> T[(Trajectory)]
+    I --> R{SimulationResult}
+    R -->|valid| T[(Trajectory)]
+    R -->|invalid| E[NumericalError]
     T --> FA[frameAt time]
     FA --> NV[NetworkView]
     FA --> RC[RateChart]
     FA --> QC[QuantityChart]
     FA --> RO[Readouts]
+    E --> IP[InvalidStatePanel]
 ```
 
 ## State ownership
@@ -31,16 +40,38 @@ The Zustand store (`src/state/simulation-store.ts`) is the sole owner of
 application state. It holds:
 
 - the active `model`, `presetId`, `params`, `profile`, `initialOverrides`;
-- the computed `trajectory` — the only place a `Trajectory` is produced;
+- the result of the last `integrate()` call, split into `status` (`'valid' |
+'invalid'`), `trajectory: Trajectory | null` (non-null only when `status
+=== 'valid'`), `error: NumericalError | null` (non-null only when `status
+=== 'invalid'`), and `diagnostics` — the only place a `SimulationResult` is
+  produced or unpacked;
 - playback state (`time`, `playing`, `speed`);
 - interaction state (`selection`, `rateView`, `hoverTime`, panel toggles,
   `reducedMotionOverride`).
 
-`trajectory` is recomputed synchronously, in the same store action, whenever
-`params`, `profile`, `initialOverrides`, or the preset change. Nothing else
-in the app calls `integrate()`. Playback time (`time`) is never anything but
-an index into the current trajectory — advancing it, scrubbing it, or hovering
-it never touches `trajectory` itself.
+The result is recomputed synchronously, in the same store action, whenever
+`params`, `profile`, `initialOverrides`, or the preset change, and applied via
+`applyResult`. Nothing else in the app calls `integrate()`. Playback time
+(`time`) is never anything but an index into the current trajectory when one
+exists — advancing it, scrubbing it, or hovering it never touches
+`trajectory` itself.
+
+## Invalid results
+
+When `applyResult` receives an `invalid` `SimulationResult`, it sets
+`status: 'invalid'`, `trajectory: null`, `error` to the `NumericalError`,
+`playing: false`, and `time: 0`. Every playback action (`play`, `restart`,
+`setTime`, `advance`) reads `trajectory` first and no-ops if it is `null`, so
+there is no way to nudge the store into "playing" a run that failed. `App`
+(`src/app/App.tsx`) branches on `status === 'valid'`: when invalid, it renders
+`InvalidStatePanel` (`role="alert"`, the error's message and diagnostic
+details, and a "Reset preset defaults" button) in place of `NetworkView`,
+hides `TransportBar`, and replaces `QuantityChart`/`RateChart` with
+"unavailable" placeholders. `StatusAnnouncer` also switches to announcing the
+failure for screen-reader users (see [accessibility.md](./accessibility.md)).
+The only paths back to a valid state are `resetToPresetDefaults()` (which
+re-selects the current preset) or changing an input to a value that produces
+a valid result.
 
 Selectors in `src/state/selectors.ts` (`selectCurrentFrame`,
 `selectHoverFrame`, `selectReadoutFrame`) derive a single `Frame` via
@@ -54,19 +85,25 @@ never disagree.
    action such as `setParam(id, value)`.
 2. The action clamps the value to the parameter's declared `[min, max]`
    (`clampParameterValue` in `src/model/validation.ts`).
-3. The action calls `computeTrajectory`, which calls `integrate()` — this
-   runs the full fixed-step RK4 pass synchronously and returns a brand-new
-   `Trajectory` object (new `Float64Array`s throughout; nothing is mutated in
-   place).
-4. The store's `set()` replaces `trajectory` (and, for `setParam`, clamps
-   `time` to the new `trajectory.duration` so playback never points past the
-   end of the new run).
-5. Zustand notifies subscribers; every component reading `trajectory` or a
-   frame derived from it re-renders from the new object. There is no diffing
-   between old and new trajectories — each is a complete, independent result.
+3. The action calls `computeResult`, which calls `integrate()` — this runs the
+   full fixed-step RK4 pass synchronously and returns a brand-new
+   `SimulationResult` (new `Float64Array`s throughout when valid; nothing is
+   mutated in place).
+4. `applyResult` maps that `SimulationResult` onto store fields: if valid, it
+   replaces `trajectory` (and, for `setParam`, clamps `time` to the new
+   `trajectory.duration` so playback never points past the end of the new
+   run); if invalid, it clears `trajectory`, sets `error`, stops playback, and
+   resets `time` to `0` (see "Invalid results" above). Either way `set()`
+   applies the whole result in one call.
+5. Zustand notifies subscribers; every component reading `status`,
+   `trajectory`, `error`, or a frame derived from `trajectory` re-renders from
+   the new state. There is no diffing between old and new results — each is a
+   complete, independent outcome.
 
-Because the trajectory is replaced wholesale rather than patched, there is no
-window where the network shows one parameter set and a chart shows another.
+Because the result is replaced wholesale rather than patched, there is no
+window where the network shows one parameter set and a chart shows another,
+and no window where part of the UI still shows a trajectory from before a run
+that just failed.
 
 ## Playback and scrubbing
 

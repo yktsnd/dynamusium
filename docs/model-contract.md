@@ -134,18 +134,42 @@ interface Trajectory {
   rather than accumulated, so there is no floating-point drift.
 - Every series is a `Float64Array`, one per species / process, in model
   order.
-- `reservoir` is guarded to be nondecreasing frame-to-frame
-  (`Math.max(reservoir[frame - 1], y[reservoirIndex])`) so interpolation or
-  rounding can never make cumulative output dip.
+- `reservoir` is nondecreasing frame-to-frame by construction of the
+  integration itself, not by a post-hoc guard: `integrate()` corrects only
+  micro-decreases within `NONNEGATIVE_TOLERANCE` and aborts on anything
+  larger, so a `Trajectory` that exists is always monotone (see
+  [numerical-method.md](./numerical-method.md) and `SimulationResult` below).
 - `frameAt(trajectory, t)` linearly interpolates all series to produce a
   `Frame` at an arbitrary `t` (clamped to `[0, duration]`).
 - `seriesMax(series)` returns the maximum value across one or more series,
   used to scale chart axes and channel widths.
 
-`integrate()` (`src/solver/integrate.ts`) returns `Trajectory &
-{ clampViolations: number }` — the extra field is solver bookkeeping (see
-[numerical-method.md](./numerical-method.md)), not part of the rendering
-contract.
+## `SimulationResult` (`src/solver/simulation-result.ts`)
+
+`integrate()` (`src/solver/integrate.ts`) does not return a bare
+`Trajectory` — it returns a `SimulationResult`, a typed union distinguishing
+a numerically usable run from one that failed:
+
+```ts
+type SimulationResult =
+  | { status: 'valid'; trajectory: Trajectory; diagnostics: Diagnostics }
+  | { status: 'invalid'; error: NumericalError; diagnostics: Diagnostics };
+```
+
+- **`Diagnostics`**: `smallClampCount` (negative excursions within tolerance
+  corrected to zero), `reservoirCorrectionCount` (reservoir micro-decreases
+  within tolerance corrected), `stepsCompleted` (steps actually integrated —
+  equals the configured step count when `status === 'valid'`, and the step
+  index reached before failure when `status === 'invalid'`).
+- **`NumericalError`**: `kind` (`'negative-quantity' | 'reservoir-decrease' |
+'non-finite'`), `message` (human-readable, shown in the UI), `time`, `step`,
+  `stateIndex`, `stateId` (species id or `'reservoir'`), `value` (the
+  offending value), `tolerance` (the tolerance that was exceeded).
+
+No component or store action may construct a `Trajectory` or treat a
+`SimulationResult` as valid without checking `status` — see
+[architecture.md](./architecture.md) for how the store and UI consume this
+union.
 
 ## Extension points
 

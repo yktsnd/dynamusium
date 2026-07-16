@@ -10,14 +10,18 @@ export function QuantityChart() {
 
   const series = useMemo<ChartSeries[]>(
     () =>
-      model.species.map((sp, i) => ({
-        id: sp.id,
-        label: sp.symbol,
-        color: `var(${sp.colorVar})`,
-        values: trajectory.quantities[i],
-      })),
+      trajectory
+        ? model.species.map((sp, i) => ({
+            id: sp.id,
+            label: sp.symbol,
+            color: `var(${sp.colorVar})`,
+            values: trajectory.quantities[i],
+          }))
+        : [],
     [model, trajectory],
   );
+
+  if (!trajectory) return null;
 
   return (
     <TimeSeriesChart

@@ -45,6 +45,24 @@ and every species' and the reservoir's current amount in one sentence. It
 updates immediately on any play/pause change, and otherwise is throttled to
 once every `ANNOUNCE_INTERVAL_MS` (5000 ms) while playing, so a screen reader
 user gets periodic updates without being flooded on every animation frame.
+When the simulation is invalid, it announces the failure message instead
+(`"Simulation invalid: {error.message} Playback is stopped. Use reset to
+restore the preset."`) rather than a quantity summary.
+
+## Invalid simulation state
+
+When `integrate()` returns an invalid `SimulationResult` (see
+[architecture.md](./architecture.md#invalid-results)), the network view is
+replaced by `InvalidStatePanel` (`src/components/controls/InvalidStatePanel.tsx`),
+a `role="alert"` region — so assistive technology announces the failure the
+moment it appears, without waiting on the throttled `aria-live="polite"`
+`StatusAnnouncer`. The panel states the failure in plain language, lists the
+structured error details (failure kind, state, time/step, value, tolerance,
+steps completed) in a `<dl>`, and provides the only way back: a single native
+`<button>` labeled "Reset preset defaults" that calls
+`resetToPresetDefaults()`. Recovery requires no new interaction pattern — the
+button is keyboard- and screen-reader-operable the same way every other
+control in the app is (see "Keyboard operability" above).
 
 ## Reduced motion
 

@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Animated network visualization of the model's state over time.
 - Synchronized charts driven by the same simulation clock.
 - Parameter presets and an interactive parameter inspector.
+- Numerical safety: integration returns a typed `SimulationResult`; failures
+  beyond tolerance (negative quantities, non-finite values, decreasing
+  cumulative output) halt playback and surface an explicit error state with
+  diagnostics instead of being clamped away.
 - Project documentation and continuous integration setup.
 
 [Unreleased]: https://github.com/yktsnd/kinetiflux/compare/v0.1.0...HEAD

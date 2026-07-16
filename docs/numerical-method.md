@@ -50,17 +50,39 @@ magic epsilons:
 | `MASS_BALANCE_RELATIVE_TOLERANCE` | `1e-8`  | Allowed relative drift in closed-system mass-balance regression checks.                                          |
 | `MONOTONICITY_TOLERANCE`          | `1e-12` | Allowed backward step in the cumulative reservoir series before it would count as a real monotonicity violation. |
 
-## Nonnegative handling
+## Numerical safety: small corrections vs. abort
+
+`integrate()` (`src/solver/integrate.ts`) does not return a bare `Trajectory`.
+It returns a `SimulationResult` (`src/solver/simulation-result.ts`) — a typed
+union of a `valid` result (`{ trajectory, diagnostics }`) and an `invalid`
+result (`{ error, diagnostics }`) — so a numerically unusable run can never be
+mistaken for a real trajectory (see [model-contract.md](./model-contract.md)
+for the full type).
 
 After every RK4 step, `integrate()` scans all state variables (species
-quantities and the reservoir, which share one state vector — see below).
-Any value `< 0` is clamped to `0`. If the excursion was more negative than
-`-NONNEGATIVE_TOLERANCE`, it is counted in `clampViolations` (returned
-alongside the trajectory as `Trajectory & { clampViolations: number }`).
-Excursions within tolerance are treated as ordinary floating-point roundoff
-and clamped silently, uncounted. A nonzero `clampViolations` after a run is a
-signal that the fixed step size may be too large for the current parameter
-values (see Limitations below), not merely numerical noise.
+quantities and the reservoir, which share one state vector — see below):
+
+- A **non-finite** value (`NaN`/`Infinity`) always aborts integration
+  immediately with a `non-finite` `NumericalError`.
+- A value `< 0` but no more negative than `-NONNEGATIVE_TOLERANCE` is ordinary
+  floating-point roundoff: it is corrected to `0` and counted in
+  `diagnostics.smallClampCount`.
+- A value more negative than `-NONNEGATIVE_TOLERANCE` is a genuine failure: it
+  aborts integration with a `negative-quantity` `NumericalError`.
+
+Aborting means exactly that: `integrate()` returns immediately with `status:
+'invalid'`, carrying the `NumericalError` (`kind`, `message`, `time`, `step`,
+`stateIndex`, `stateId`, `value`, `tolerance`) and the `diagnostics`
+accumulated up to the failing step. No trajectory is produced and none of the
+steps after the failure are computed — an invalid run is never silently
+clamped into something that looks like a valid one.
+
+On success, `integrate()` returns `status: 'valid'` with the completed
+`trajectory` and the final `diagnostics` (`smallClampCount`,
+`reservoirCorrectionCount`, `stepsCompleted`). A nonzero `smallClampCount` is
+a signal that the fixed step size may be pushing the current parameter values
+toward the edge of what's well-behaved (see Limitations below), even though
+the run still succeeded.
 
 ## Reservoir as an extra state variable
 
@@ -72,11 +94,16 @@ processes add their rate to that index's derivative the same way `conversion`
 processes add to a species' derivative. This keeps the reservoir on the same
 integration footing (same step, same solver, same clamping) as every species.
 
-On top of that, `record()` in `integrate()` applies an explicit
-`Math.max(reservoir[frame - 1], y[reservoirIndex])` guard when storing each
-frame, so that even if a step or interpolation would otherwise produce a
-minute backward tick in the stored series, the recorded cumulative-output
-curve is monotone by construction.
+The reservoir is subject to the same small-correction-vs-abort logic
+described above, applied to its own step-to-step change rather than its
+absolute sign: a decrease from the previous step of no more than
+`NONNEGATIVE_TOLERANCE` is floating-point noise — the value is corrected back
+to the previous frame's reservoir value and counted in
+`diagnostics.reservoirCorrectionCount`. A larger decrease aborts integration
+with a `reservoir-decrease` `NumericalError`. There is no unconditional
+`Math.max` guard forcing monotonicity on every frame — only micro-decreases
+within tolerance are corrected; a real backward tick is treated as the
+numerical failure it is, not papered over.
 
 ## Determinism
 
@@ -96,20 +123,23 @@ model, stated plainly rather than left implicit:
 
 - **Fixed step is not suited to stiff systems.** There is no adaptive
   step-size control, so a parameter combination that makes the system stiff
-  (widely separated rate constants) can produce visible clamp violations or
-  an inaccurate solution without any runtime error — nothing currently
-  surfaces `clampViolations` in the UI.
+  (e.g. rate constants far beyond the stable region for the fixed `dt`) is
+  not clamped or masked — it surfaces as an `invalid` `SimulationResult` (see
+  above), and the store halts playback and shows the failure rather than
+  displaying an inaccurate solution.
 - **First-order mass-action kinetics only.** The rate laws `compileSystem`
   can build are limited to what `ProcessDef` expresses (see
   [model-contract.md](./model-contract.md)); this solver has no support for
   second-order, saturating, or otherwise nonlinear rate expressions.
-- **Clamping slightly perturbs strict conservation.** Clamping a small
-  negative excursion to exactly zero is a real (if tiny, at
-  `NONNEGATIVE_TOLERANCE` scale) departure from what unclamped continuous
-  integration would have produced; closed-system mass balance is only
-  guaranteed up to `MASS_BALANCE_RELATIVE_TOLERANCE`, not exactly.
+- **Small-tolerance correction still perturbs strict conservation.**
+  Correcting a within-tolerance negative excursion to exactly zero is a real
+  (if tiny, at `NONNEGATIVE_TOLERANCE` scale) departure from what unclamped
+  continuous integration would have produced; closed-system mass balance is
+  only guaranteed up to `MASS_BALANCE_RELATIVE_TOLERANCE`, not exactly. Larger
+  excursions are not corrected at all — they abort the run instead (see
+  above).
 
-None of this is a general endorsement of RK4-with-clamping as correct for
-arbitrary kinetic systems — it is documentation of the specific, deliberate
-tradeoff this project made for a demonstration model with well-behaved,
-non-stiff parameter ranges.
+None of this is a general endorsement of RK4-with-tolerance-correction as
+correct for arbitrary kinetic systems — it is documentation of the specific,
+deliberate tradeoff this project made for a demonstration model with
+well-behaved, non-stiff parameter ranges.

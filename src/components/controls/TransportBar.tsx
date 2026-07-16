@@ -14,9 +14,12 @@ export function TransportBar() {
   const time = useSimulationStore((s) => s.time);
   const playing = useSimulationStore((s) => s.playing);
   const speed = useSimulationStore((s) => s.speed);
-  const duration = useSimulationStore((s) => s.trajectory.duration);
-  const dt = useSimulationStore((s) => s.trajectory.dt);
+  const duration = useSimulationStore((s) => s.trajectory?.duration ?? null);
+  const dt = useSimulationStore((s) => s.trajectory?.dt ?? null);
   const { togglePlay, restart, setSpeed, setTime, setHoverTime } = useSimulationStore.getState();
+
+  // Rendered only for a valid simulation (see App.tsx).
+  if (duration === null || dt === null) return null;
 
   return (
     <div className="transport" data-testid="transport">
