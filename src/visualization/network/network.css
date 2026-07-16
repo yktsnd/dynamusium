@@ -1,0 +1,117 @@
+.network {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Keep the scene legible on narrow screens: scroll instead of shrinking. */
+  min-width: 620px;
+}
+
+/* Vessels */
+.vessel {
+  cursor: pointer;
+  outline: none;
+}
+.vessel-body {
+  fill: var(--surface-2);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.vessel.is-selected .vessel-body,
+.vessel:focus-visible .vessel-body {
+  stroke: var(--text-1);
+  stroke-width: 2;
+}
+.vessel:focus-visible .vessel-body {
+  stroke-dasharray: 5 4;
+}
+.vessel-tick {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.vessel-symbol {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  fill: var(--text-1);
+}
+.vessel-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  fill: var(--text-2);
+}
+.vessel-value {
+  font-size: 14px;
+  fill: var(--text-1);
+}
+
+/* Channels */
+.channel {
+  cursor: pointer;
+  outline: none;
+}
+.channel-hit {
+  stroke: transparent;
+  stroke-width: 30;
+}
+.channel-lane {
+  stroke-linecap: round;
+  transition: stroke-opacity var(--dur-fast) var(--ease-out);
+}
+.channel-lane.is-idle {
+  stroke: var(--line);
+  stroke-dasharray: 2 7;
+}
+.channel.is-selected .channel-lane:not(.is-idle) {
+  stroke-opacity: 0.75;
+}
+.channel:focus-visible .channel-hit {
+  stroke: rgba(234, 238, 246, 0.14);
+}
+.chevrons path {
+  stroke: var(--text-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chevrons.is-idle path {
+  stroke: var(--text-3);
+  opacity: 0.5;
+}
+.channel-rate {
+  font-size: 11.5px;
+  fill: var(--text-2);
+}
+
+/* Particles */
+.particle {
+  pointer-events: none;
+}
+
+/* Feed */
+.feed-title {
+  fill: var(--text-3);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.feed-spark-frame {
+  fill: var(--surface-1);
+  stroke: var(--line);
+}
+.feed-spark {
+  fill: none;
+  stroke: var(--feed);
+  stroke-width: 1.6;
+}
+.feed-spark-dot {
+  fill: var(--text-1);
+}
+
+/* Basin */
+.basin-body {
+  fill: var(--surface-2);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}

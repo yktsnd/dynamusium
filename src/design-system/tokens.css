@@ -1,0 +1,65 @@
+/*
+ * KinetiFlux design tokens — single dark "deep ink" theme.
+ *
+ * Species/reservoir palette is CVD-validated (adjacent + all pairs) against
+ * --bg with the dataviz six-check validator; do not change one color without
+ * re-validating the set. Identity is never color-alone: vessels carry symbol
+ * letters, chart series carry direct labels, reverse-rate lines are dashed.
+ */
+:root {
+  /* Surfaces */
+  --bg: #0b0e15;
+  --surface-1: #10141d;
+  --surface-2: #151b27;
+  --surface-3: #1b2231;
+  --line: rgba(154, 168, 196, 0.14);
+  --line-strong: rgba(154, 168, 196, 0.3);
+
+  /* Ink */
+  --text-1: #eaeef6;
+  --text-2: #9aa6bb;
+  --text-3: #6b7890;
+
+  /* Interactive */
+  --accent: #eaeef6;
+  --accent-ink: #0b0e15;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(234, 238, 246, 0.85);
+
+  /* Data palette (validated as a set, in this adjacency order) */
+  --species-a: #c98500;
+  --species-b: #3987e5;
+  --species-c: #d55181;
+  --reservoir: #008300;
+  --reservoir-bright: #2eae53;
+
+  /* Feed (input profile) — neutral, not part of the categorical set */
+  --feed: #8fa3c4;
+
+  /* Chart chrome */
+  --grid: rgba(154, 168, 196, 0.1);
+  --cursor: rgba(234, 238, 246, 0.55);
+  --hover-cursor: rgba(234, 238, 246, 0.3);
+
+  /* Geometry */
+  --radius-panel: 12px;
+  --radius-control: 8px;
+  --radius-vessel: 10px;
+
+  /* Spacing rhythm (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Type */
+  --font-display: 'Space Grotesk Variable', system-ui, sans-serif;
+  --font-ui: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-mid: 260ms;
+}

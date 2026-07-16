@@ -1,0 +1,119 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: var(--text-1);
+  border-radius: var(--radius-control);
+}
+.brand:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.brand-word {
+  font-size: 17px;
+}
+.brand-word-accent {
+  color: var(--species-b);
+}
+
+.header-presets {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+.header-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.header-actions .btn.is-active {
+  border-color: var(--text-2);
+}
+
+/* Workspace grid */
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  align-items: start;
+  max-width: 1560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.stage-canvas {
+  overflow-x: auto;
+  background:
+    radial-gradient(1100px 420px at 50% 0%, rgba(57, 135, 229, 0.05), transparent 65%),
+    var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-1) var(--space-2);
+}
+.stage-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .header {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .header-presets {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace {
+    padding: var(--space-3);
+  }
+  .transport {
+    flex-wrap: wrap;
+  }
+  .timeline {
+    order: 5;
+    flex-basis: 100%;
+  }
+}
