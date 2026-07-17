@@ -23,28 +23,23 @@ function laneRate(lane: LaneGeom, rates: ProcessRates, view: RateView): number {
   return lane.dir === 'forward' ? Math.max(0, rates.net) : Math.max(0, -rates.net);
 }
 
-function Chevrons({ lane, active }: { lane: LaneGeom; active: boolean }) {
+function Chevrons({ lane }: { lane: LaneGeom }) {
   const dir = lane.x2 >= lane.x1 ? 1 : -1;
   const midX = (lane.x1 + lane.x2) / 2;
   const y = lane.y1;
   return (
-    <g className={`chevrons${active ? '' : ' is-idle'}`}>
-      {[-10, 2].map((dx) => (
-        <path
-          key={dx}
-          d={`M ${midX + dx * dir} ${y - 4} l ${7 * dir} 4 l ${-7 * dir} 4`}
-          fill="none"
-        />
-      ))}
+    <g className="chevrons">
+      <path d={`M ${midX - 3.5 * dir} ${y - 4} l ${7 * dir} 4 l ${-7 * dir} 4`} fill="none" />
     </g>
   );
 }
 
 /**
- * A transfer channel. Stroke width encodes |rate| (sqrt scale); chevrons and
- * particle direction encode direction; idle channels render dashed and faint.
- * In directional view a reversible channel shows both lanes; in net view a
- * single lane shows the signed net rate.
+ * A transfer channel. A permanent hairline shows the structural connection at
+ * all times; a rate band (stroke width encodes |rate|, sqrt scale) layers on
+ * top only while active. One chevron per lane encodes direction regardless of
+ * activity. In directional view a reversible channel shows both lanes; in net
+ * view a single lane shows the signed net rate.
  */
 export function Channel({
   geom,
@@ -94,17 +89,27 @@ export function Channel({
         const color = lane.dir === 'forward' ? forwardColor : reverseColor;
         return (
           <g key={lane.dir}>
+            {/* Permanent structural hairline: visible even at zero rate. */}
             <line
-              className={`channel-lane${active ? '' : ' is-idle'}`}
+              className="channel-hairline"
               x1={lane.x1}
               y1={lane.y1}
               x2={lane.x2}
               y2={lane.y2}
-              stroke={active ? color : undefined}
-              strokeWidth={rateToWidth(r, rateScale)}
-              strokeOpacity={active ? 0.4 : undefined}
             />
-            <Chevrons lane={lane} active={active} />
+            {active && (
+              <line
+                className="channel-lane"
+                x1={lane.x1}
+                y1={lane.y1}
+                x2={lane.x2}
+                y2={lane.y2}
+                stroke={color}
+                strokeWidth={rateToWidth(r, rateScale)}
+                strokeOpacity={0.3}
+              />
+            )}
+            <Chevrons lane={lane} />
           </g>
         );
       })}

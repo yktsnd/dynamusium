@@ -46,7 +46,6 @@ export function FeedInlet({ geom, profile, duration, time, currentRate, unit }: 
       <text className="t-label feed-title" x={x} y={y - 8}>
         Feed
       </text>
-      <rect className="feed-spark-frame" x={x - 6} y={y - 4} width={w + 12} height={h + 8} rx={6} />
       <path className="feed-spark" d={path} />
       <circle className="feed-spark-dot" cx={markerX} cy={markerY} r={3} />
       <text

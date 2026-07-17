@@ -37,14 +37,35 @@ export function NodeVessel({ species, geom, quantity, unit, selected, onSelect }
         }
       }}
     >
-      <rect className="vessel-body" x={geom.x} y={geom.y} width={geom.w} height={geom.h} rx={10} />
-      {/* gauge ticks at 25/50/75% */}
+      {/* Open-top instrument column: left/right hairlines + baseline, no top edge. */}
+      <line
+        className="vessel-edge"
+        x1={geom.x}
+        y1={geom.y}
+        x2={geom.x}
+        y2={geom.y + geom.h}
+      />
+      <line
+        className="vessel-edge"
+        x1={geom.x + geom.w}
+        y1={geom.y}
+        x2={geom.x + geom.w}
+        y2={geom.y + geom.h}
+      />
+      <line
+        className="vessel-edge"
+        x1={geom.x}
+        y1={geom.y + geom.h}
+        x2={geom.x + geom.w}
+        y2={geom.y + geom.h}
+      />
+      {/* gauge ticks at 25/50/75%, touching only the left hairline */}
       {[0.25, 0.5, 0.75].map((f) => (
         <line
           key={f}
           className="vessel-tick"
-          x1={geom.x + 1}
-          x2={geom.x + 9}
+          x1={geom.x}
+          x2={geom.x + 8}
           y1={geom.y + geom.h - 6 - f * (geom.h - 12)}
           y2={geom.y + geom.h - 6 - f * (geom.h - 12)}
         />
@@ -58,7 +79,7 @@ export function NodeVessel({ species, geom, quantity, unit, selected, onSelect }
             height={fillH}
             rx={5}
             fill={color}
-            opacity={0.32}
+            opacity={0.22}
           />
           <line
             x1={geom.x + 5}
@@ -66,12 +87,12 @@ export function NodeVessel({ species, geom, quantity, unit, selected, onSelect }
             y1={fillY}
             y2={fillY}
             stroke={color}
-            strokeWidth={2.5}
+            strokeWidth={2}
             strokeLinecap="round"
           />
         </>
       )}
-      <text className="vessel-symbol" x={geom.cx} y={geom.y + 34} textAnchor="middle">
+      <text className="vessel-symbol" x={geom.cx} y={geom.y - 12} textAnchor="middle">
         {species.symbol}
       </text>
       <text className="vessel-label" x={geom.cx} y={geom.y + geom.h + 24} textAnchor="middle">

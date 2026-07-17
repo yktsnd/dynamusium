@@ -2,17 +2,17 @@ import type { ModelDefinition, ProcessDef } from '../../model/schema.ts';
 
 /**
  * Computes all network geometry in one place, from model layout metadata.
- * The SVG uses a fixed 960 x 430 internal coordinate space and scales
+ * The SVG uses a fixed 1000 x 400 internal coordinate space and scales
  * responsively via viewBox.
  */
 
-export const VIEW_W = 960;
-export const VIEW_H = 372;
+export const VIEW_W = 1000;
+export const VIEW_H = 400;
 
-export const VESSEL_W = 96;
-export const VESSEL_H = 196;
-export const BASIN_W = 122;
-export const BASIN_H = 148;
+export const VESSEL_W = 64;
+export const VESSEL_H = 230;
+export const BASIN_W = 150;
+export const BASIN_H = 110;
 
 /** Vertical offset between the two lanes of a reversible channel. */
 export const LANE_OFFSET = 9;

@@ -4,7 +4,7 @@
  */
 
 /** Wall-clock seconds a particle takes to traverse a channel (not a rate encoding). */
-export const PARTICLE_TRAVEL_SECONDS = 1.1;
+export const PARTICLE_TRAVEL_SECONDS = 1.4;
 
 /** Cap on live particles per lane; keeps fast scenarios calm and legible. */
 export const MAX_PARTICLES_PER_LANE = 14;

@@ -213,7 +213,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   advance: (dtWall) => {
     const { time, speed, trajectory, playing } = get();
     if (!playing || !trajectory) return;
-    const next = time + dtWall * speed;
+    // Clamp at 0: a browser's very first rAF callback timestamp can occasionally
+    // precede the wall-clock reference captured when the loop started, producing
+    // a momentary negative dtWall — never let displayed time go negative.
+    const next = Math.max(0, time + dtWall * speed);
     if (next >= trajectory.duration) {
       set({ time: trajectory.duration, playing: false });
     } else {

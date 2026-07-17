@@ -17,8 +17,10 @@ export const TRACE_NOMINAL_W = 1000;
 /** Left gutter reserved for far-left y tick numbers. */
 export const TRACE_LEFT_MARGIN = 34;
 
-/** Right-edge column reserved for the live readout (symbol + current value). */
-export const TRACE_READOUT_WIDTH = 92;
+/** Right-edge column reserved for the live readout (symbol + current value).
+ * Wide enough for the longest process label ("C → output") plus its value
+ * without the two colliding at typical strip widths. */
+export const TRACE_READOUT_WIDTH = 128;
 
 /** Breathing room between the plotted line and the readout column. */
 export const TRACE_RIGHT_GAP = 8;

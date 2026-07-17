@@ -21,10 +21,19 @@ interface Dot {
   cx: number;
   cy: number;
   fill: string;
+  opacity: number;
 }
 
 function reversed(l: LaneGeom): LaneGeom {
   return { dir: 'reverse', x1: l.x2, y1: l.y2, x2: l.x1, y2: l.y1 };
+}
+
+/** Presentational fade: 0→1 over the first 8% of progress, 1→0 over the last 8%. */
+const FADE_FRACTION = 0.08;
+function fadeOpacity(progress: number): number {
+  if (progress < FADE_FRACTION) return progress / FADE_FRACTION;
+  if (progress > 1 - FADE_FRACTION) return (1 - progress) / FADE_FRACTION;
+  return 1;
 }
 
 /**
@@ -116,6 +125,7 @@ export function ParticleLayer({ channels, colors }: Props) {
               cx: def.lane.x1 + (def.lane.x2 - def.lane.x1) * p.progress,
               cy: def.lane.y1 + (def.lane.y2 - def.lane.y1) * p.progress,
               fill: def.fill,
+              opacity: fadeOpacity(p.progress),
             });
           }
         }
@@ -131,7 +141,15 @@ export function ParticleLayer({ channels, colors }: Props) {
   return (
     <g className="particles" aria-hidden="true">
       {dots.map((d) => (
-        <circle key={d.id} className="particle" cx={d.cx} cy={d.cy} r={3.4} fill={d.fill} />
+        <circle
+          key={d.id}
+          className="particle"
+          cx={d.cx}
+          cy={d.cy}
+          r={2.6}
+          fill={d.fill}
+          opacity={d.opacity}
+        />
       ))}
     </g>
   );

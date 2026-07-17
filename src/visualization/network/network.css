@@ -1,7 +1,9 @@
 .network {
   display: block;
-  width: 100%;
-  height: auto;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
   /* Keep the scene legible on narrow screens: scroll instead of shrinking. */
   min-width: 620px;
 }
@@ -11,17 +13,17 @@
   cursor: pointer;
   outline: none;
 }
-.vessel-body {
-  fill: var(--surface-2);
+.vessel-edge {
+  fill: none;
   stroke: var(--line-strong);
   stroke-width: 1.5;
 }
-.vessel.is-selected .vessel-body,
-.vessel:focus-visible .vessel-body {
+.vessel.is-selected .vessel-edge,
+.vessel:focus-visible .vessel-edge {
   stroke: var(--text-1);
   stroke-width: 2;
 }
-.vessel:focus-visible .vessel-body {
+.vessel:focus-visible .vessel-edge {
   stroke-dasharray: 5 4;
 }
 .vessel-tick {
@@ -30,17 +32,17 @@
 }
 .vessel-symbol {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   fill: var(--text-1);
 }
 .vessel-label {
   font-family: var(--font-ui);
-  font-size: 13px;
-  fill: var(--text-2);
+  font-size: 12px;
+  fill: var(--text-3);
 }
 .vessel-value {
-  font-size: 14px;
+  font-size: 13px;
   fill: var(--text-1);
 }
 
@@ -53,29 +55,26 @@
   stroke: transparent;
   stroke-width: 30;
 }
+/* Permanent structural hairline: shows the connection even at zero rate. */
+.channel-hairline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
 .channel-lane {
   stroke-linecap: round;
   transition: stroke-opacity var(--dur-fast) var(--ease-out);
 }
-.channel-lane.is-idle {
-  stroke: var(--line);
-  stroke-dasharray: 2 7;
-}
-.channel.is-selected .channel-lane:not(.is-idle) {
+.channel.is-selected .channel-lane {
   stroke-opacity: 0.75;
 }
 .channel:focus-visible .channel-hit {
   stroke: rgba(234, 238, 246, 0.14);
 }
 .chevrons path {
-  stroke: var(--text-2);
-  stroke-width: 1.6;
+  stroke: var(--text-3);
+  stroke-width: 1.2;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.chevrons.is-idle path {
-  stroke: var(--text-3);
-  opacity: 0.5;
 }
 .channel-rate {
   font-size: 11.5px;
@@ -91,14 +90,10 @@
 .feed-title {
   fill: var(--text-3);
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-.feed-spark-frame {
-  fill: var(--surface-1);
-  stroke: var(--line);
 }
 .feed-spark {
   fill: none;
@@ -109,9 +104,9 @@
   fill: var(--text-1);
 }
 
-/* Basin */
+/* Basin: open-top instrument column, same hairline language as vessels. */
 .basin-body {
-  fill: var(--surface-2);
+  fill: none;
   stroke: var(--line-strong);
   stroke-width: 1.5;
 }
