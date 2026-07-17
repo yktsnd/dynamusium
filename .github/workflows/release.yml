@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (created on the current commit if it does not exist)'
+        required: true
+        default: 'v0.1.0'
 
 permissions:
   contents: write
@@ -11,6 +17,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,9 +28,32 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Package build output
-        run: tar -czf "kinetiflux-${GITHUB_REF_NAME}.tar.gz" -C dist .
+        run: tar -czf "kinetiflux-${RELEASE_TAG}.tar.gz" -C dist .
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: KinetiFlux ${{ env.RELEASE_TAG }}
           generate_release_notes: true
-          files: kinetiflux-${{ github.ref_name }}.tar.gz
+          files: kinetiflux-${{ env.RELEASE_TAG }}.tar.gz
+          body: |
+            **KinetiFlux** — interactive reaction-kinetics and dynamic-flow visualization.
+
+            Watch quantities, rates, flow directions, and collected output move through a
+            deterministic physical-chemistry model: an animated network driven by a real
+            fixed-step RK4 solution, four curated presets, directional/net views for the
+            reversible process, synchronized quantity/rate charts with a shared time cursor,
+            a parameter inspector with instant recomputation, typed numerical-safety results
+            (failures beyond tolerance halt playback with explicit diagnostics instead of
+            being clamped away), reduced-motion support, and a responsive UI.
+
+            The repository ships AI-ready documentation (`AGENTS.md`, architecture / model
+            contract / numerical method / visual language docs, ADRs), OSS community files,
+            issue forms, CI, and a GitHub Pages deploy workflow.
+
+            **Live demo:** https://yktsnd.github.io/kinetiflux/ (activates once GitHub Pages
+            is enabled for this repository).
+
+            **Known limitations:** fixed-step RK4 is not suited to stiff systems; no
+            screen-reader data-table alternative for the charts yet (#9); no animated README
+            demo yet (#10).
