@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a defect in the application (rendering, interaction, or build).
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Step-by-step instructions to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Set parameter '...' to '...'
+        3. Observe '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+  - type: input
+    id: browser-os
+    attributes:
+      label: Browser and OS
+      placeholder: e.g. Firefox 128 on macOS 15
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Application version or commit
+      placeholder: e.g. v0.1.0 or commit hash
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional — attach screenshots or a screen recording if relevant.
+    validations:
+      required: false
+  - type: checkboxes
+    id: accessibility
+    attributes:
+      label: Accessibility impact
+      options:
+        - label: This bug affects accessibility (assistive technology, keyboard navigation, contrast, etc.)
+          required: false

@@ -1,0 +1,59 @@
+name: Numerical correctness issue
+description: Report a case where the solver or model produces incorrect or unexpected numerical results.
+title: '[Numerical]: '
+labels:
+  - numerical-correctness
+body:
+  - type: textarea
+    id: parameters
+    attributes:
+      label: Model parameters used
+      description: List the parameter values in effect when the issue occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: input-profile
+    attributes:
+      label: Input profile
+      description: Kind of input (e.g. step, pulse, ramp, constant) and its values.
+    validations:
+      required: true
+  - type: textarea
+    id: initial-conditions
+    attributes:
+      label: Initial conditions
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproducible steps
+      description: Step-by-step instructions to reproduce the result.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: e.g. Chrome 126 on Windows 11
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      placeholder: e.g. v0.1.0 or commit hash
+    validations:
+      required: true
