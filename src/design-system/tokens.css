@@ -40,6 +40,14 @@
   --cursor: rgba(234, 238, 246, 0.55);
   --hover-cursor: rgba(234, 238, 246, 0.3);
 
+  /* Signal (text-only; never used as a data-series color) */
+  --signal-invalid: #e5786d;
+
+  /* Instrument layout */
+  --rail-h: 48px;
+  --drawer-w: 360px;
+  --readout-w: 110px;
+
   /* Geometry */
   --radius-panel: 12px;
   --radius-control: 8px;
