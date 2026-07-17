@@ -3,7 +3,12 @@ import { formatAmount } from '../lib/formatting/format.ts';
 import { useSimulationStore } from '../state/simulation-store.ts';
 import { niceScale } from './chart-scale.ts';
 import { useSharedCursor } from './shared-cursor.ts';
-import { TRACE_LEFT_MARGIN, TRACE_NOMINAL_W, TRACE_READOUT_WIDTH, TRACE_RIGHT_GAP } from './trace-layout.ts';
+import {
+  TRACE_LEFT_MARGIN,
+  TRACE_NOMINAL_W,
+  TRACE_READOUT_WIDTH,
+  TRACE_RIGHT_GAP,
+} from './trace-layout.ts';
 import './charts.css';
 
 export interface ChartSeries {
@@ -192,14 +197,7 @@ export function TimeSeriesChart({
         {scale.ticks
           .filter((tv) => tv === 0)
           .map((tv) => (
-            <line
-              key={tv}
-              className="chart-zero"
-              x1={M.l}
-              x2={M.l + PW}
-              y1={y(tv)}
-              y2={y(tv)}
-            />
+            <line key={tv} className="chart-zero" x1={M.l} x2={M.l + PW} y1={y(tv)} y2={y(tv)} />
           ))}
         {series.map((s, i) => (
           <path

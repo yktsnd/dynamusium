@@ -38,13 +38,7 @@ export function NodeVessel({ species, geom, quantity, unit, selected, onSelect }
       }}
     >
       {/* Open-top instrument column: left/right hairlines + baseline, no top edge. */}
-      <line
-        className="vessel-edge"
-        x1={geom.x}
-        y1={geom.y}
-        x2={geom.x}
-        y2={geom.y + geom.h}
-      />
+      <line className="vessel-edge" x1={geom.x} y1={geom.y} x2={geom.x} y2={geom.y + geom.h} />
       <line
         className="vessel-edge"
         x1={geom.x + geom.w}

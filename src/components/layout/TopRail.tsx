@@ -1,4 +1,9 @@
-import { BrandMark, ExhibitIcon, MotionIcon, QuestionIcon } from '../../design-system/icons/index.tsx';
+import {
+  BrandMark,
+  ExhibitIcon,
+  MotionIcon,
+  QuestionIcon,
+} from '../../design-system/icons/index.tsx';
 import { useReducedMotion } from '../../lib/accessibility/useReducedMotion.ts';
 import { useSimulationStore } from '../../state/simulation-store.ts';
 import { PresetSwitcher } from '../controls/PresetSwitcher.tsx';
@@ -23,7 +28,11 @@ export function TopRail({ exhibitMode, onToggleExhibit }: Props) {
 
   return (
     <header className="rail">
-      <a className="rail-brand" href="https://github.com/yktsnd/kinetiflux" aria-label="KinetiFlux on GitHub">
+      <a
+        className="rail-brand"
+        href="https://github.com/yktsnd/kinetiflux"
+        aria-label="KinetiFlux on GitHub"
+      >
         <BrandMark size={18} />
         <span className="rail-word t-display">
           Kineti<span className="brand-word-accent">Flux</span>

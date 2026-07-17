@@ -29,7 +29,12 @@ async function pause(page: Page) {
 
 test('opens complete: title, network, charts, legend, no dead controls', async ({ page }) => {
   await expect(page).toHaveTitle(/KinetiFlux/);
+  // The caption carries the first impression now; the legend is opt-in.
+  await expect(page.getByTestId('legend-card')).toHaveCount(0);
+  await page.getByTestId('legend-toggle').click();
   await expect(page.getByTestId('legend-card')).toBeVisible();
+  await page.getByTestId('legend-close').click();
+  await expect(page.getByTestId('legend-card')).toHaveCount(0);
   await expect(page.locator('.vessel')).toHaveCount(3);
   await expect(page.locator('.basin')).toHaveCount(1);
   await expect(page.getByTestId('readout-quantities')).toBeVisible();
@@ -103,19 +108,20 @@ test('editing a parameter recomputes the displayed trajectory', async ({ page })
 });
 
 test('switching reversible display mode changes rate decomposition', async ({ page }) => {
-  // Directional view shows the dashed reverse series B→A in the rate legend.
-  await expect(page.locator('.chart-legend', { hasText: 'B→A' })).toBeVisible();
+  // Directional view shows the dashed reverse series B→A in the rates readout column.
+  await expect(page.getByTestId('readout-rates')).toContainText('B→A');
   await page.getByTestId('rate-view-net').click();
-  await expect(page.locator('.chart-legend', { hasText: 'B→A' })).toHaveCount(0);
+  await expect(page.getByTestId('readout-rates')).not.toContainText('B→A');
   await page.getByTestId('rate-view-directional').click();
-  await expect(page.locator('.chart-legend', { hasText: 'B→A' })).toBeVisible();
+  await expect(page.getByTestId('readout-rates')).toContainText('B→A');
 });
 
-test('legend dismisses and reopens; keyboard reaches the transport', async ({ page }) => {
-  await page.getByTestId('legend-close').click();
+test('legend opens via toggle and dismisses; keyboard reaches the timeline', async ({ page }) => {
   await expect(page.getByTestId('legend-card')).toHaveCount(0);
   await page.getByTestId('legend-toggle').click();
   await expect(page.getByTestId('legend-card')).toBeVisible();
+  await page.getByTestId('legend-close').click();
+  await expect(page.getByTestId('legend-card')).toHaveCount(0);
 
   // The timeline is a real range input and responds to the keyboard.
   await pause(page);
