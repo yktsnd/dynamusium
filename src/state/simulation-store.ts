@@ -46,6 +46,8 @@ export interface SimulationState {
   hoverTime: number | null;
   /** null = follow the OS prefers-reduced-motion setting. */
   reducedMotionOverride: boolean | null;
+  /** Exhibition (kiosk) mode: auto-advancing presets, receded UI chrome. */
+  exhibitMode: boolean;
 
   selectPreset: (id: string) => void;
   setParam: (id: string, value: number) => void;
@@ -67,6 +69,7 @@ export interface SimulationState {
   setInspectorOpen: (open: boolean) => void;
   setHoverTime: (t: number | null) => void;
   setReducedMotionOverride: (value: boolean | null) => void;
+  setExhibitMode: (value: boolean) => void;
 }
 
 function presetById(id: string): Preset {
@@ -130,10 +133,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   selection: null,
   rateView: 'directional',
-  legendOpen: true,
+  // The museum caption carries the first impression; the legend is opt-in.
+  legendOpen: false,
   inspectorOpen: false,
   hoverTime: null,
   reducedMotionOverride: null,
+  exhibitMode: false,
 
   selectPreset: (id) => {
     const { model } = get();
@@ -208,7 +213,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   advance: (dtWall) => {
     const { time, speed, trajectory, playing } = get();
     if (!playing || !trajectory) return;
-    const next = time + dtWall * speed;
+    // Clamp at 0: a browser's very first rAF callback timestamp can occasionally
+    // precede the wall-clock reference captured when the loop started, producing
+    // a momentary negative dtWall — never let displayed time go negative.
+    const next = Math.max(0, time + dtWall * speed);
     if (next >= trajectory.duration) {
       set({ time: trajectory.duration, playing: false });
     } else {
@@ -224,4 +232,5 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   setInspectorOpen: (open) => set({ inspectorOpen: open }),
   setHoverTime: (t) => set({ hoverTime: t }),
   setReducedMotionOverride: (value) => set({ reducedMotionOverride: value }),
+  setExhibitMode: (value) => set({ exhibitMode: value }),
 }));

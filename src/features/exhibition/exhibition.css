@@ -1,0 +1,69 @@
+/* Exhibition mode: scene-transition fades between presets and UI recession
+ * after a period of inactivity. Every visible state is still a real
+ * simulated frame — these rules only ever animate opacity/visibility. */
+
+.app-root.is-exhibit .field {
+  transition: opacity 400ms var(--ease-out);
+}
+.app-root.is-exhibit.is-field-hidden .field {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-root.is-exhibit.is-recessed .rail,
+.app-root.is-exhibit.is-recessed .transport,
+.app-root.is-exhibit.is-recessed .axis {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms var(--ease-out);
+}
+.app-root.is-exhibit.is-recessed .rail:focus-within,
+.app-root.is-exhibit.is-recessed .transport:focus-within,
+.app-root.is-exhibit.is-recessed .axis:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+.app-root.is-exhibit.is-recessed .caption,
+.app-root.is-exhibit.is-recessed [data-testid='readout-quantities'],
+.app-root.is-exhibit.is-recessed [data-testid='readout-rates'] {
+  opacity: 0.5;
+  transition: opacity 400ms var(--ease-out);
+}
+
+/* Caption interstitial shown centered/prominent between auto-advanced presets. */
+.caption.is-prominent {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-align: center;
+  background: var(--bg);
+  padding: 0 var(--space-5);
+}
+.caption.is-prominent .caption-kicker {
+  font-size: 13px;
+}
+.caption.is-prominent .caption-tagline {
+  font-size: 20px;
+  color: var(--text-1);
+  max-width: 46ch;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-root.is-exhibit .field,
+  .app-root.is-exhibit.is-recessed .rail,
+  .app-root.is-exhibit.is-recessed .transport,
+  .app-root.is-exhibit.is-recessed .axis,
+  .app-root.is-exhibit.is-recessed .caption,
+  .app-root.is-exhibit.is-recessed [data-testid='readout-quantities'],
+  .app-root.is-exhibit.is-recessed [data-testid='readout-rates'] {
+    transition: none;
+  }
+}

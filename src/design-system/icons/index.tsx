@@ -67,6 +67,13 @@ export const MotionIcon = () => (
   </Icon>
 );
 
+/** Exhibition-mode toggle: expand-to-corners glyph. */
+export const ExhibitIcon = () => (
+  <Icon>
+    <path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" />
+  </Icon>
+);
+
 /** KinetiFlux product mark: a vessel with a level fill and an inbound particle. */
 export function BrandMark({ size = 26 }: { size?: number }) {
   return (

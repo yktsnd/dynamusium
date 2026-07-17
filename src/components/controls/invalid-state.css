@@ -9,7 +9,7 @@
 }
 
 .invalid-panel-kicker {
-  color: #ffb4a8;
+  color: var(--signal-invalid);
 }
 
 .invalid-panel-title {
@@ -19,31 +19,15 @@
 
 .invalid-panel-message {
   margin: 0;
-  color: var(--text-2);
+  color: var(--text-1);
+  font-size: 15px;
   max-width: 62ch;
 }
 
 .invalid-panel-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-5);
   margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-2);
+  color: var(--text-2);
   font-size: 12px;
-}
-.invalid-panel-details dt {
-  color: var(--text-3);
-  font-family: var(--font-ui);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.invalid-panel-details dd {
-  margin: 2px 0 0;
-  color: var(--text-1);
 }
 
 .invalid-panel-hint {
@@ -53,7 +37,27 @@
   max-width: 62ch;
 }
 
-.chart-unavailable {
+.invalid-reset-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: var(--space-1) 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.invalid-reset-btn:hover {
+  color: var(--text-1);
+}
+.invalid-reset-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 4px;
+}
+
+.trace-unavailable {
   color: var(--text-3);
   font-size: 13px;
   min-height: 120px;

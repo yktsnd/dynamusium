@@ -14,9 +14,9 @@ const BASE = process.env.CAPTURE_URL ?? 'http://localhost:4173';
 const OUT = process.argv[2] ?? 'docs/media';
 
 const shots = [
-  { name: 'hero', width: 1440, height: 900, settle: 6000 },
-  { name: 'wide', width: 1280, height: 800, settle: 9000 },
-  { name: 'responsive', width: 390, height: 844, settle: 6000 },
+  { name: 'hero', width: 1440, height: 900, settle: 6000, preset: 'steady-feed', dsf: 2 },
+  { name: 'wide', width: 1280, height: 800, settle: 12000, preset: 'tidal-feed', dsf: 2 },
+  { name: 'responsive', width: 390, height: 844, settle: 6000, preset: 'steady-feed', dsf: 1 },
 ];
 
 await mkdir(OUT, { recursive: true });
@@ -30,10 +30,13 @@ const browser = await chromium.launch(
 for (const shot of shots) {
   const page = await browser.newPage({
     viewport: { width: shot.width, height: shot.height },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: shot.dsf ?? 2,
   });
   await page.goto(BASE);
   await page.waitForSelector('.network');
+  if (shot.preset) {
+    await page.getByTestId(`preset-${shot.preset}`).click();
+  }
   // Let playback develop visible dynamics before capturing.
   await page.waitForTimeout(shot.settle);
   await page.screenshot({ path: `${OUT}/${shot.name}.png` });

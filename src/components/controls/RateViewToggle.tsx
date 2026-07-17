@@ -16,12 +16,12 @@ export function RateViewToggle() {
   const setRateView = useSimulationStore((s) => s.setRateView);
 
   return (
-    <div className="seg-group" role="group" aria-label="Reversible flow display">
+    <div className="ghost-group" role="group" aria-label="Reversible flow display">
       {OPTIONS.map((o) => (
         <button
           key={o.value}
           type="button"
-          className={`btn btn-seg${rateView === o.value ? ' is-active' : ''}`}
+          className={`ghost-tab${rateView === o.value ? ' is-active' : ''}`}
           aria-pressed={rateView === o.value}
           title={o.title}
           data-testid={`rate-view-${o.value}`}

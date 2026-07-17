@@ -129,6 +129,36 @@ produces a burst of particles representing time it didn't actually animate
 through. The same reset happens when the trajectory object itself changes
 (new params/profile/preset) or `rateView` toggles.
 
+## Exhibition (kiosk) mode
+
+`src/features/exhibition/` is a thin presentation layer for unattended,
+kiosk-style display, built entirely on top of the existing playback loop and
+store — it introduces no second source of simulated state. `useExhibition`
+(`src/features/exhibition/useExhibition.ts`) owns `exhibitMode` (a store
+boolean toggled by a rail button, the "e" key, or the `?exhibit=1` URL
+param), best-effort fullscreen, and two independent behaviors:
+
+- **Auto-advance**: when a trajectory finishes playing while exhibition mode
+  is on, the hook holds the final frame, fades the field out, then calls
+  `selectPreset(next.id)` — the same store action `PresetSwitcher` calls on a
+  user click — to move to the next preset (cyclic through `presets`), shows
+  that preset's caption prominently, then fades back in. Auto-advance never
+  bypasses `computeResult`/`applyResult`; every frame it displays, including
+  during the transition, is the output of a real `integrate()` call.
+- **UI recession**: after a period with no `pointermove`/`keydown`/`focusin`,
+  the hook sets a `uiRecessed` flag that a CSS class scheme
+  (`exhibition.css`) uses to fade the rail, transport, and axis chrome to
+  `opacity: 0`, keeping only the caption and trace-strip readout columns
+  faintly visible.
+
+Both behaviors are driven purely by CSS classes on the app root
+(`is-exhibit`, `is-recessed`, `is-field-hidden`) and store subscriptions —
+`usePlaybackLoop` and `integrate()` are untouched by exhibition mode. See
+[docs/visual-language.md](./visual-language.md) for how the fades and the
+prominent caption render, and
+[docs/accessibility.md](./accessibility.md#exhibition-mode) for the
+reduced-motion and focus behavior of UI recession.
+
 ## See also
 
 - [docs/model-contract.md](./model-contract.md) — the typed interfaces this flow is built on.

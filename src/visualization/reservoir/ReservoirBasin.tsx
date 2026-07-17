@@ -40,7 +40,7 @@ export function ReservoirBasin({ reservoir, geom, amount, unit }: Props) {
             height={fillH}
             rx={4}
             fill={color}
-            opacity={0.5}
+            opacity={0.22}
           />
           <line
             x1={geom.x + 5}
@@ -48,7 +48,7 @@ export function ReservoirBasin({ reservoir, geom, amount, unit }: Props) {
             y1={geom.y + geom.h - 5 - fillH}
             y2={geom.y + geom.h - 5 - fillH}
             stroke={bright}
-            strokeWidth={2.5}
+            strokeWidth={2}
             strokeLinecap="round"
           />
         </>

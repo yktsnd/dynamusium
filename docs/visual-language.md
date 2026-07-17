@@ -36,21 +36,30 @@ of the rate over that interval — particle _frequency_ is the rate encoding.
 
 ### Particle travel time
 
-`PARTICLE_TRAVEL_SECONDS` (1.1 s of wall clock) is how long a particle takes
-to cross its channel, fixed regardless of rate, playback speed, or channel
-length. This is deliberately **not** a rate encoding — a fast-flowing channel
-emits particles more often, it does not make them travel faster. See
+`PARTICLE_TRAVEL_SECONDS` (1.4 s of wall clock, `src/design-system/motion.ts`)
+is how long a particle takes to cross its channel, fixed regardless of rate,
+playback speed, or channel length. This is deliberately **not** a rate
+encoding — a fast-flowing channel emits particles more often, it does not
+make them travel faster. See
 [ADR 0003](./decisions/0003-particle-rate-encoding.md) for why.
+
+A particle's opacity is a purely presentational easing on top of that travel:
+`fadeOpacity` in `ParticleLayer.tsx` ramps 0→1 over the first 8% of a
+particle's progress along its lane and 1→0 over the last 8%, so dots appear
+and disappear softly at the vessel/basin edges instead of popping in and out.
+Particles render at a fixed radius (`r={2.6}`). None of this affects _when_ a
+particle is emitted — emission timing is entirely the integrated-rate quantum
+scheme described above, untouched by this redesign.
 
 ### Direction
 
-Direction is carried redundantly by three things at once: chevron marks along
+Direction is carried redundantly by three things at once: a chevron mark on
 the channel (`Chevrons` in `src/visualization/channels/Channel.tsx`, oriented
-by lane direction and faded on idle lanes), the actual travel direction of
-particles, and — in directional view — two vertically offset lanes per
-reversible process (`LANE_OFFSET` = 9 units in
-`src/visualization/network/geometry.ts`): the forward lane runs `from -> to`,
-the reverse lane `to -> from`.
+by lane direction and rendered identically whether or not the lane is
+currently active), the actual travel direction of particles, and — in
+directional view — two vertically offset lanes per reversible process
+(`LANE_OFFSET` = 9 units in `src/visualization/network/geometry.ts`): the
+forward lane runs `from -> to`, the reverse lane `to -> from`.
 
 ### Net vs. directional view
 
@@ -82,10 +91,11 @@ and a thicker stroke width (3px vs. 2px) while every other series dims to
 ### Inactive channel
 
 A lane whose rate falls below `INACTIVE_RATE_FRACTION` (0.004) of the current
-`rateScale` renders `is-idle`: no stroke color (falls back to the CSS default,
-a faint line), dashed, and its chevrons render in a dimmed idle state. This
-is a rendering threshold only — it never affects the underlying rate value or
-any computed number.
+`rateScale` simply does not render its colored rate band (`channel-lane` in
+`Channel.tsx`) at all — only the permanent structural hairline (see
+"Filaments" below) and its chevron remain visible, at their normal,
+unchanged color and weight. This is a rendering threshold only — it never
+affects the underlying rate value or any computed number.
 
 ### Cumulative output (basin)
 
@@ -125,6 +135,95 @@ labels (`showRateLabel` becomes unconditionally true when
 motion — only the animated particle stream is removed.
 
 ## Visual identity
+
+### The "Quiet Instrument" identity
+
+The whole viewport is the field: `App.tsx` composes a top rail, a museum
+caption, the network stage, and an "instrument block" of trace strips + time
+axis + transport directly on the page background. There is no card surface
+anywhere in this main flow — no bordered panel around the network, no
+per-chart frame, no boxed readout row. Card/panel chrome (background fill,
+border, border-radius) is now reserved exclusively for the three overlay
+surfaces that sit on top of the field: the parameters drawer
+(`InspectorPanel`), the "how to read" legend overlay (`LegendCard`), and the
+invalid-state takeover (`InvalidStatePanel`, which replaces the network stage
+in place rather than floating over it). Structural separation inside the
+field is drawn with a single 1px hairline (`.strip-sep` between the two trace
+strips, `border-bottom` under the rail) rather than boxes.
+
+### Instrument columns (vessels and the basin)
+
+A species vessel (`NodeVessel`) renders as an **open-top** instrument column:
+a left hairline, a right hairline, and a baseline (`.vessel-edge`) — no top
+edge closing the shape, so it reads as a graduated tube rather than a
+container. Three faint graduation ticks mark the 25/50/75% levels off the
+left hairline (`.vessel-tick`). The fill itself is a translucent tinted
+rectangle (`opacity: 0.22`) capped by a 2px, full-opacity meniscus line in
+the species color — that meniscus line is the single brightest, most
+saturated mark in the vessel, deliberately more prominent than the fill body
+beneath it or the hairline frame around it. The reservoir basin
+(`ReservoirBasin`) is the same open-top instrument-column language, just
+wider and shorter (`BASIN_W`/`BASIN_H` vs `VESSEL_W`/`VESSEL_H` in
+`network/geometry.ts`) with rounded bottom corners instead of vessels' square
+baseline, and its meniscus uses `--reservoir-bright` rather than the
+reservoir's base color so it stays legible against the wider fill.
+
+### Filaments (channels)
+
+A channel (`Channel.tsx`) is drawn as a **permanent structural hairline**
+(`.channel-hairline`, `var(--line)`, 1px) for every lane, at every rate,
+including zero — the connection between vessels is always visible as a
+filament, whether or not anything is currently flowing through it. When a
+lane's rate is active (see "Inactive channel" above), a translucent colored
+rate band (`.channel-lane`, `strokeOpacity: 0.3`, width from `rateToWidth`)
+is layered directly on top of that same hairline, brightening on selection
+(`strokeOpacity: 0.75`). Each lane carries exactly one chevron mark
+(`Chevrons`, a single small `<path>` at the lane's midpoint) rather than a
+repeating chevron pattern along its length — direction is legible as one
+quiet mark, not a texture.
+
+### Feed sparkline
+
+The external feed's profile preview (`FeedInlet`) is a bare polyline plus a
+current-time dot directly on the field — no frame, no background rectangle
+around it, just a label, the sparkline path, and a rate readout beneath it.
+
+### Trace strips
+
+`TimeSeriesChart` (used by `QuantityChart` and `RateChart`) has no chart
+chrome: no card background, no border, no legend row, and no readout row
+below the plot. Series identity and their current values instead live in a
+**right-edge live readout column** rendered inside the same SVG
+(`data-testid="readout-quantities"` / `"readout-rates"`): one row per series,
+each a short color swatch, the series' short label, and its formatted
+current value, vertically spread apart if needed
+(`layoutReadoutRows`) so rows never overlap. That column updates continuously
+during playback and during hover/scrub — it is not restricted to a
+static legend. The x-axis itself carries no tick marks or tick labels inside
+the trace strips anymore; both `QuantityChart` and `RateChart` render only a
+y-axis tick column, a zero-line, the series paths, and the playback/hover
+cursors. Horizontal (time) ticks live in exactly one place now: the time
+axis below the strips.
+
+### Time axis as scrubber
+
+`TimeAxis` is simultaneously the x-axis for both trace strips above it and
+the playback scrubber: a hairline track with faint 10-second tick marks and
+labels, a native `<input type="range">` thumb for the current time, and a
+right-aligned mono time readout (`data-testid="time-readout"`). It shares the
+trace strips' left/right margin fractions
+(`TRACE_LEFT_FRACTION`/`TRACE_RIGHT_FRACTION` in `charts/trace-layout.ts`),
+so the scrubber thumb always lines up horizontally with the playback cursor
+drawn inside the strips above it, at any viewport width.
+
+### Museum caption
+
+`Caption` renders the model's name as a small kicker label and the active
+preset's one-line tagline directly beneath the top rail — plain text on the
+field, no card. It replaces the old in-card stage title. In exhibition mode
+it can also render `prominent` (`.caption.is-prominent`): a centered,
+larger-type, full-viewport interstitial shown between auto-advanced presets
+(see [architecture.md](./architecture.md) for the exhibition module).
 
 ### Single "deep ink" theme
 
@@ -167,7 +266,7 @@ is a property of the set, not of any single color in isolation.
 
 Identity is never carried by color alone anywhere in the app: species vessels
 carry a symbol letter and a text label, chart series carry direct labels in
-the legend and readout row, reverse-rate lines are dashed, and direction is
-additionally carried by chevrons and particle travel. A person who cannot
-distinguish the palette's hues can still read every value the palette
-encodes.
+each trace strip's live readout column, reverse-rate lines are dashed, and
+direction is additionally carried by chevrons and particle travel. A person
+who cannot distinguish the palette's hues can still read every value the
+palette encodes.
