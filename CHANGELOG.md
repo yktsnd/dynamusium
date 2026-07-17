@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Exhibition (kiosk) mode: a fullscreen presentation mode (toggle button,
+  "e" key, or `?exhibit=1` URL param) that auto-advances through presets by
+  calling the same preset-selection action a user click would, with a
+  scene-transition fade and a prominent caption interstitial between
+  presets, and that recedes its own chrome after a period of inactivity,
+  restoring it on any input.
+
+### Changed
+
+- Redesigned the presentation layer around a "Quiet Instrument" identity:
+  the network view and trace strips now sit directly on the field with no
+  card chrome, in open-top instrument-column vessels and a matching
+  reservoir basin, connected by permanent hairline "filament" channels with
+  a translucent rate band layered on top only while active.
+- Reworked the quantity and rate charts into chrome-free trace strips with a
+  right-edge live readout column replacing the old below-chart readout row
+  and per-chart legend.
+- Replaced the in-card stage title with a museum-style caption (model name
+  plus the active preset's tagline).
+- Turned the time axis into the playback scrubber, sharing the trace
+  strips' horizontal scale so the scrubber thumb and the charts' playback
+  cursor always align.
+- The "how to read" legend overlay now starts closed by default.
+
 ## [0.1.0] - 2026-07-16
 
 ### Added

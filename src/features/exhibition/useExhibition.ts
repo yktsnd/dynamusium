@@ -42,6 +42,10 @@ export function useExhibition() {
   const enable = useCallback(() => {
     setExhibitMode(true);
     document.documentElement.requestFullscreen?.().catch(() => {});
+    // Release focus from whatever triggered entry (typically the rail's own
+    // toggle button) — otherwise `:focus-within` would hold that control's
+    // container permanently revealed, defeating UI recession entirely.
+    (document.activeElement as HTMLElement | null)?.blur();
   }, [setExhibitMode]);
 
   const disable = useCallback(() => {

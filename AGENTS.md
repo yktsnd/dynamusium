@@ -21,23 +21,24 @@ stochastic simulation, stiff-system solvers.
 
 ## Repository map
 
-| Path                      | Responsibility                                                                                                                                                                                 |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/model/`              | Typed model contract (`schema.ts`), demonstration model, input profiles, ODE assembly (`equations.ts`), validation. **No React, no DOM.**                                                      |
-| `src/solver/`             | Fixed-step RK4 integration (`rk4.ts`, `integrate.ts`), trajectory type + interpolation (`trajectory.ts`), canonical tolerances (`numerical-tolerance.ts`). **No React, no DOM, no rendering.** |
-| `src/state/`              | Zustand store (`simulation-store.ts`) — the one place that composes model + params + profile into a trajectory — and pure selectors.                                                           |
-| `src/features/presets/`   | Curated scenarios (parameter/profile/initial overrides).                                                                                                                                       |
-| `src/features/playback/`  | rAF loop advancing playback time.                                                                                                                                                              |
-| `src/features/inspector/` | Parameter/profile editing panel.                                                                                                                                                               |
-| `src/visualization/`      | SVG network: geometry, vessels (`nodes/`), channels, particle engine + layer (`particles/`), reservoir, and the canonical number→visual mappings (`visual-scales.ts`).                         |
-| `src/charts/`             | Time-series charts + shared time cursor. Charts render trajectory arrays directly.                                                                                                             |
-| `src/design-system/`      | Design tokens (`tokens.css`), type roles, motion constants, icons, brand mark.                                                                                                                 |
-| `src/components/`         | Layout and generic controls (transport, presets, legend, announcer).                                                                                                                           |
-| `src/lib/`                | Small pure helpers (formatting, accessibility hooks).                                                                                                                                          |
-| `docs/`                   | Architecture, model contract, numerical method, visual language, accessibility, ADRs.                                                                                                          |
-| `tests/`                  | Vitest unit suites (`model/`, `solver/`, `visualization/`, `state/`) + Playwright e2e (`e2e/`).                                                                                                |
-| `examples/`               | A second model definition proving the contract is model-agnostic.                                                                                                                              |
-| `scripts/`                | Repo utilities (screenshot capture).                                                                                                                                                           |
+| Path                       | Responsibility                                                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/model/`               | Typed model contract (`schema.ts`), demonstration model, input profiles, ODE assembly (`equations.ts`), validation. **No React, no DOM.**                                                      |
+| `src/solver/`              | Fixed-step RK4 integration (`rk4.ts`, `integrate.ts`), trajectory type + interpolation (`trajectory.ts`), canonical tolerances (`numerical-tolerance.ts`). **No React, no DOM, no rendering.** |
+| `src/state/`               | Zustand store (`simulation-store.ts`) — the one place that composes model + params + profile into a trajectory — and pure selectors.                                                           |
+| `src/features/presets/`    | Curated scenarios (parameter/profile/initial overrides).                                                                                                                                       |
+| `src/features/playback/`   | rAF loop advancing playback time.                                                                                                                                                              |
+| `src/features/inspector/`  | Parameter/profile editing panel.                                                                                                                                                               |
+| `src/features/exhibition/` | Kiosk/auto-advance presentation mode (`useExhibition`) — layers scene transitions and UI recession on top of the existing playback loop and store; never a second source of simulated state.   |
+| `src/visualization/`       | SVG network: geometry, vessels (`nodes/`), channels, particle engine + layer (`particles/`), reservoir, and the canonical number→visual mappings (`visual-scales.ts`).                         |
+| `src/charts/`              | Time-series charts + shared time cursor. Charts render trajectory arrays directly.                                                                                                             |
+| `src/design-system/`       | Design tokens (`tokens.css`), type roles, motion constants, icons, brand mark.                                                                                                                 |
+| `src/components/`          | Layout and generic controls (transport, presets, legend, announcer).                                                                                                                           |
+| `src/lib/`                 | Small pure helpers (formatting, accessibility hooks).                                                                                                                                          |
+| `docs/`                    | Architecture, model contract, numerical method, visual language, accessibility, ADRs.                                                                                                          |
+| `tests/`                   | Vitest unit suites (`model/`, `solver/`, `visualization/`, `state/`) + Playwright e2e (`e2e/`).                                                                                                |
+| `examples/`                | A second model definition proving the contract is model-agnostic.                                                                                                                              |
+| `scripts/`                 | Repo utilities (screenshot capture).                                                                                                                                                           |
 
 ## Architectural boundaries
 

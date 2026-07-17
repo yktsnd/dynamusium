@@ -64,6 +64,58 @@ steps completed) in a `<dl>`, and provides the only way back: a single native
 button is keyboard- and screen-reader-operable the same way every other
 control in the app is (see "Keyboard operability" above).
 
+## Overlay focus management
+
+The parameters drawer (`InspectorPanel`) and the "how to read" legend
+overlay (`LegendCard`) are the only two card/panel surfaces in the app (see
+[visual-language.md](./visual-language.md#the-quiet-instrument-identity)),
+and both manage focus the same way, via a pair of `useEffect` hooks that
+mirror each other in the two components:
+
+- **On open**, the component records `document.activeElement` (the trigger
+  that opened it) and immediately moves focus to the panel's own close
+  button.
+- **On close**, focus returns to whatever element was previously recorded —
+  the trigger — rather than being left on a now-removed or now-hidden
+  element.
+- **`Escape`** closes either overlay from anywhere on the page while it is
+  open, via a `document`-level `keydown` listener installed only while the
+  panel is open.
+
+Both are also `role="dialog"` with an `aria-label` ("Parameters" / "How to
+read"), so assistive technology announces them as a dialog when focus moves
+in. The legend is closed by default (`legendOpen` starts `false` in
+`src/state/simulation-store.ts`) and is opened only via the rail's
+"How to read" button (`legend-toggle`) or a user pressing it again to close;
+clicking the scrim behind the legend card also closes it, in addition to the
+close button and `Escape`.
+
+## Exhibition mode
+
+Exhibition (kiosk) mode's UI recession (see
+[architecture.md](./architecture.md#exhibition-kiosk-mode)) fades the rail,
+transport, and time axis to `opacity: 0` with `pointer-events: none` after a
+period of no pointer, keyboard, or focus activity
+(`exhibition.css`, `.app-root.is-exhibit.is-recessed .rail` etc.). This is a
+visual-only change: the elements are never removed from the DOM or given
+`aria-hidden`/`display: none`, so they stay in the accessibility tree
+throughout. Each recessed region also carries a `:focus-within` override
+(`opacity: 1; pointer-events: auto`) — if a control inside the rail,
+transport, or axis is focused (e.g. by keyboard) while the chrome is
+recessed, that region snaps back to visible immediately, so a focused
+control is never left invisible or unreachable mid-interaction. The caption
+and the trace strips' live readout columns never fully hide during
+recession; they dim to `opacity: 0.5` instead of `0`.
+
+Exhibition mode's auto-advance sequence (hold the finished trajectory →
+fade the field out → select the next preset → show its caption → fade back
+in) respects reduced motion selectively: under `prefers-reduced-motion` (or
+the in-app override, both read via the same `useReducedMotion` used
+elsewhere), the two 400 ms opacity fades between scenes are skipped —
+`useExhibition.ts` sets `fadeMs` to `0` — but the 6-second hold on the
+finished frame and the 4-second caption interstitial keep their normal
+timing either way, since neither of those is an animation.
+
 ## Reduced motion
 
 Two layers, combined in `useReducedMotion` (`src/lib/accessibility/useReducedMotion.ts`):
@@ -85,14 +137,14 @@ section).
 Every encoding that uses color or motion has at least one redundant,
 non-color, non-motion carrier:
 
-| Meaning                  | Color/motion carrier          | Redundant carrier(s)                                                          |
-| ------------------------ | ----------------------------- | ----------------------------------------------------------------------------- |
-| Species identity         | `colorVar` fill/stroke        | Symbol letter + text label on every vessel                                    |
-| Forward vs. reverse flow | Destination-node color        | Direction chevrons; particle travel direction; reverse chart lines are dashed |
-| Active vs. idle channel  | Full-opacity vs. faint stroke | Dashed stroke pattern (`is-idle`)                                             |
-| Rate magnitude           | Particle frequency (motion)   | Channel stroke width (static, sqrt-scaled) and the numeric rate label         |
-| Selection                | Brighter stroke               | Rate label forced visible; chart line thickened and de-emphasizes others      |
-| Cumulative output        | Basin fill rising             | Numeric readout beneath the basin                                             |
+| Meaning                  | Color/motion carrier                                     | Redundant carrier(s)                                                                                                                                             |
+| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Species identity         | `colorVar` fill/stroke                                   | Symbol letter + text label on every vessel                                                                                                                       |
+| Forward vs. reverse flow | Destination-node color                                   | Direction chevrons; particle travel direction; reverse chart lines are dashed                                                                                    |
+| Active vs. idle channel  | Translucent colored rate band (present only when active) | Permanent structural hairline and one chevron render at every rate, including zero — a channel's existence and direction are never dependent on its colored band |
+| Rate magnitude           | Particle frequency (motion)                              | Channel stroke width (static, sqrt-scaled) and the numeric rate label                                                                                            |
+| Selection                | Brighter stroke                                          | Rate label forced visible; chart line thickened and de-emphasizes others                                                                                         |
+| Cumulative output        | Basin fill rising                                        | Numeric readout beneath the basin                                                                                                                                |
 
 Turning off motion (reduced-motion mode) or being unable to distinguish the
 palette's hues never removes access to a value — only the animated particle
@@ -100,12 +152,14 @@ stream disappears; widths, chevrons, dashes, and numeric labels all remain.
 
 ## Charts without hovering
 
-Each `TimeSeriesChart` (quantity and rate charts) has a legend row
-(`role="list"`, one labeled swatch per series, dashed swatches for reverse
-lines) and a readout row beneath the plot
-(`data-testid="readout-{title}"`) that always shows the current playback
-time and every series' current value as text — both render unconditionally,
-so the chart is fully readable without ever hovering or dragging.
+Each `TimeSeriesChart` (quantity and rate charts) renders a right-edge live
+readout column (`data-testid="readout-quantities"` / `"readout-rates"`) with
+one row per series — a color swatch, the series' label, and its current
+value — that updates continuously during playback and always shows the
+value at the current or hovered time as text. The time axis beneath the
+strips (`data-testid="time-readout"`) always shows the current playback time
+the same way. Both render unconditionally, so every chart is fully readable
+without ever hovering or dragging.
 
 ## How to report an issue
 

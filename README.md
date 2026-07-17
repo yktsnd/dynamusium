@@ -24,8 +24,10 @@ GitHub Pages.
 - Synchronized quantity and rate charts sharing one time cursor with the network view.
 - A directional view (separate forward/reverse lanes) and a net view (one signed lane) for
   reversible processes.
-- A parameter inspector with instant recomputation — every change re-integrates the whole
+- A parameters drawer with instant recomputation — every change re-integrates the whole
   trajectory synchronously.
+- An exhibition (kiosk) mode: fullscreen, auto-advancing through presets with scene-transition
+  captions, for unattended display.
 - Full reduced-motion support, independent of and overriding the OS preference.
 - A deterministic, fixed-step RK4 numerical core with tested invariants (see
   [`AGENTS.md`](./AGENTS.md#numerical-invariants)).
