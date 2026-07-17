@@ -69,6 +69,10 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Extra vertical slack (short instrument-block, tall viewport) collects
+     above the system rather than between it and the traces, so the system
+     and the traces read as one instrument. */
+  justify-content: flex-end;
   width: 100%;
   max-width: 1560px;
   margin: 0 auto;
@@ -76,11 +80,14 @@
 
 .system-stage {
   flex: 1 1 auto;
+  /* Cap growth (~55% of viewport height per the composition spec) instead of
+     absorbing all leftover space as centered whitespace below the vessels. */
+  max-height: 55vh;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-5) var(--space-2);
   overflow-x: auto;
 }
 
@@ -228,6 +235,13 @@
   }
   .caption {
     padding: var(--space-2) var(--space-4) 0;
+  }
+  .caption-tagline {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .system-stage {
     padding: var(--space-3) var(--space-4);

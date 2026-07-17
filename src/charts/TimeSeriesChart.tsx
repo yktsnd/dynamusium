@@ -33,7 +33,7 @@ interface Props {
 
 const W = TRACE_NOMINAL_W;
 const H = 172;
-const M = { l: TRACE_LEFT_MARGIN, r: TRACE_READOUT_WIDTH + TRACE_RIGHT_GAP, t: 10, b: 14 };
+const M = { l: TRACE_LEFT_MARGIN, r: TRACE_READOUT_WIDTH + TRACE_RIGHT_GAP, t: 16, b: 14 };
 const PW = W - M.l - M.r;
 const PH = H - M.t - M.b;
 const READOUT_MIN_GAP_PX = 20;

@@ -21,7 +21,7 @@ export function FeedInlet({ geom, profile, duration, time, currentRate, unit }: 
   const w = 118;
   const h = 34;
   const x = geom.x1 + 6;
-  const y = geom.y1 - 78;
+  const y = geom.y1 - 56;
 
   const { path, max } = useMemo(() => {
     const n = 80;
