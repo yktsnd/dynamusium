@@ -17,7 +17,13 @@ test('entrance presents the complete museum and all thirty works', async ({ page
   await expect(page.getByRole('heading', { name: /Enter the living/ })).toBeVisible();
   await expect(page.locator('.flagship-card')).toHaveCount(6);
   await expect(page.locator('.collection-card')).toHaveCount(30);
-  await page.getByRole('button', { name: 'Matter & Pattern', exact: true }).click();
+  const all = page.getByRole('button', { name: 'All', exact: true });
+  const matter = page.getByRole('button', { name: 'Matter & Pattern', exact: true });
+  await expect(page.getByRole('group', { name: 'Filter by gallery' })).toBeVisible();
+  await expect(all).toHaveAttribute('aria-pressed', 'true');
+  await matter.click();
+  await expect(all).toHaveAttribute('aria-pressed', 'false');
+  await expect(matter).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.collection-card')).toHaveCount(6);
 });
 
@@ -36,6 +42,9 @@ test('a visitor can enter, pause, scrub, tune, and open the study view', async (
   await expect(page.locator('.parameter-drawer')).toContainText('35.00');
 
   await page.getByRole('button', { name: 'study' }).click();
+  await expect(page.getByRole('button', { name: 'study' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('group', { name: 'Viewing mode' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Simulation preset' })).toBeVisible();
   await expect(page.locator('.study-panel')).toBeVisible();
   await expect(page.locator('.study-panel table')).toBeVisible();
   await expect(page.locator('.study-panel')).toContainText('Deterministic Nonperiodic Flow');
@@ -45,5 +54,10 @@ test('deep links restore work, viewing mode, and preset', async ({ page }) => {
   await page.goto('/?work=lotka-volterra&mode=study&preset=threshold');
   await expect(page.getByRole('heading', { name: 'Lotka–Volterra' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'study' })).toHaveClass(/is-active/);
+  await expect(page.getByRole('button', { name: 'study' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: 'Near threshold' })).toHaveClass(/is-active/);
+  await expect(page.getByRole('button', { name: 'Near threshold' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });

@@ -199,7 +199,7 @@ const builtInWorks: WorkManifest[] = [
     threshold: { speed: 1.65, mode: 5 },
     citation: [
       "d'Alembert, Recherches sur la courbe que forme une corde tenduë mise en vibration",
-      'https://gallica.bnf.fr/ark:/12148/bpt6k35504/f225.item',
+      'https://epiphymaths.univ-fcomte.fr/1t1m/d_alembert-recherches_sur_la_courbe_que_forme_une_corde_tendue_mise_en_vibration-1747.pdf',
     ],
   }),
   defineWork({
@@ -752,7 +752,7 @@ const builtInWorks: WorkManifest[] = [
     ],
     quiet: { eccentricity: 0.08 },
     threshold: { eccentricity: 0.86 },
-    citation: ['Kepler, Astronomia Nova', 'https://doi.org/10.5479/sil.126675.39088002667864'],
+    citation: ['Kepler, Astronomia Nova', 'https://doi.org/10.5479/sil.126675.39088002685477'],
   }),
   defineWork({
     slug: 'hohmann-transfer',

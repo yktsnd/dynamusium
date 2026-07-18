@@ -143,10 +143,11 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
             <p className="eyebrow">Permanent collection</p>
             <h2 id="collection-title">Five scales of becoming</h2>
           </div>
-          <div className="gallery-filters" aria-label="Filter by gallery">
+          <div className="gallery-filters" role="group" aria-label="Filter by gallery">
             <button
               className={gallery === 'all' ? 'is-active' : ''}
               type="button"
+              aria-pressed={gallery === 'all'}
               onClick={() => setGallery('all')}
             >
               All
@@ -156,6 +157,7 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
                 className={gallery === item.id ? 'is-active' : ''}
                 type="button"
                 key={item.id}
+                aria-pressed={gallery === item.id}
                 onClick={() => setGallery(item.id)}
               >
                 {item.label}
@@ -468,12 +470,13 @@ function WorkExperience({
           <span>{galleries.find((gallery) => gallery.id === work.gallery)?.label}</span>
           <strong>{work.title}</strong>
         </div>
-        <div className="mode-switcher" aria-label="Viewing mode">
+        <div className="mode-switcher" role="group" aria-label="Viewing mode">
           {(['observe', 'study', 'exhibit'] as MuseumMode[]).map((item) => (
             <button
               className={mode === item ? 'is-active' : ''}
               type="button"
               key={item}
+              aria-pressed={mode === item}
               onClick={() => changeMode(item)}
             >
               {item}
@@ -524,12 +527,14 @@ function WorkExperience({
         <span className="time-readout">
           {(progress * result.duration).toFixed(1)} / {result.duration.toFixed(1)}
         </span>
-        <div className="preset-controls">
+        <div className="preset-controls" role="group" aria-label="Simulation preset">
           {work.presets.map((preset) => (
             <button
               className={presetId === preset.id ? 'is-active' : ''}
               type="button"
               key={preset.id}
+              aria-label={preset.label}
+              aria-pressed={presetId === preset.id}
               onClick={() => selectPreset(preset.id)}
             >
               {preset.label}
