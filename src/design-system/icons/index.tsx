@@ -74,7 +74,7 @@ export const ExhibitIcon = () => (
   </Icon>
 );
 
-/** KinetiFlux product mark: a vessel with a level fill and an inbound particle. */
+/** Legacy reaction-instrument mark retained for the specialized network view. */
 export function BrandMark({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">

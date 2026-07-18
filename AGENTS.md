@@ -6,23 +6,24 @@ or architecture changes — and only then.
 
 ## Product purpose
 
-KinetiFlux is an interactive visualization of deterministic reaction-kinetics
-and flow models. A model (species, processes, parameters, an input profile) is
-integrated numerically into an immutable trajectory; the UI plays that
-trajectory back as an animated network (vessels, channels, particles, an
-output reservoir) with synchronized charts.
+DynaMusium is an interactive museum of dynamic systems. Thirty sourced works
+across motion, matter, life, Earth, and the cosmos expose computed trajectories
+or fields through Observe, Study, and Exhibit modes. The original deterministic
+reaction-network instrument remains a tested specialized runtime.
 
-**Intended users:** people exploring or teaching dynamic physical-chemistry /
-mathematical-modeling behavior, and developers studying the architecture.
+**Intended users:** curious general visitors, learners and teachers of
+mathematical modelling, and contributors adding scientifically reviewed works.
 
-**Deliberately not in this version:** a graphical model editor, arbitrary
-user-defined models in the UI, npm package publishing, server-side anything,
-stochastic simulation, stiff-system solvers.
+**Deliberately not in this version:** a graphical equation editor, runtime file
+uploads, accounts, analytics, server-side services, persistent user data, or
+unsourced/generated placeholder works.
 
 ## Repository map
 
 | Path                       | Responsibility                                                                                                                                                                                 |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/museum/`              | Museum Shell, permanent catalog, public work types, deterministic cross-domain kernels, and presentation.                                                                                      |
+| `src/works/`               | JSON Schema and auto-discovered community work manifests.                                                                                                                                      |
 | `src/model/`               | Typed model contract (`schema.ts`), demonstration model, input profiles, ODE assembly (`equations.ts`), validation. **No React, no DOM.**                                                      |
 | `src/solver/`              | Fixed-step RK4 integration (`rk4.ts`, `integrate.ts`), trajectory type + interpolation (`trajectory.ts`), canonical tolerances (`numerical-tolerance.ts`). **No React, no DOM, no rendering.** |
 | `src/state/`               | Zustand store (`simulation-store.ts`) — the one place that composes model + params + profile into a trajectory — and pure selectors.                                                           |
@@ -42,6 +43,12 @@ stochastic simulation, stiff-system solvers.
 
 ## Architectural boundaries
 
+- Work manifests contain metadata and bounded controls; equations live only in
+  simulation kernels, never React components.
+- Identical manifest, parameter, preset, and seed inputs produce identical
+  `WorkResult` output.
+- Decorative room atmosphere is not a scientific encoding and stays separate
+  from normalized result rendering.
 - Model code (`src/model/`) must not depend on React or the DOM.
 - Solver code (`src/solver/`) must not depend on rendering.
 - Rendering consumes simulation results only through the typed interfaces in
@@ -94,19 +101,21 @@ not a weakened test.
 
 ## Standard commands
 
-| Task                   | Command                                                                    |
-| ---------------------- | -------------------------------------------------------------------------- |
-| Install                | `npm install` (CI: `npm ci`)                                               |
-| Develop                | `npm run dev`                                                              |
-| Unit + numerical tests | `npm test`                                                                 |
-| Watch tests            | `npm run test:watch`                                                       |
-| E2E tests              | `npx playwright install chromium` once, then `npm run test:e2e`            |
-| Lint                   | `npm run lint`                                                             |
-| Type check             | `npm run typecheck`                                                        |
-| Format                 | `npm run format` (check: `npm run format:check`)                           |
-| Production build       | `npm run build`                                                            |
-| Preview build          | `npm run preview`                                                          |
-| **Full validation**    | **`npm run check`** (format check → lint → typecheck → unit tests → build) |
+| Task                    | Command                                                                    |
+| ----------------------- | -------------------------------------------------------------------------- |
+| Install                 | `npm install` (CI: `npm ci`)                                               |
+| Develop                 | `npm run dev`                                                              |
+| Unit + numerical tests  | `npm test`                                                                 |
+| Watch tests             | `npm run test:watch`                                                       |
+| E2E tests               | `npx playwright install chromium` once, then `npm run test:e2e`            |
+| Lint                    | `npm run lint`                                                             |
+| Type check              | `npm run typecheck`                                                        |
+| Format                  | `npm run format` (check: `npm run format:check`)                           |
+| Production build        | `npm run build`                                                            |
+| Preview build           | `npm run preview`                                                          |
+| **Full validation**     | **`npm run check`** (format check → lint → typecheck → unit tests → build) |
+| Validate work manifests | `npm run work:validate`                                                    |
+| Scaffold a work         | `npm run work:new -- <slug> "<Title>"`                                     |
 
 ## Change workflow
 

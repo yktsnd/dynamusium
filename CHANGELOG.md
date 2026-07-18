@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Reintroduced the project as **DynaMusium — Museum of Dynamic Systems** with
+  thirty sourced interactive works across five scientific galleries.
+- Added Observe, Study, and Exhibit modes, synchronized accessible data tables,
+  deterministic ODE/discrete/field/analytic runtimes, and shareable work URLs.
+- Added a machine-readable work schema and `work:new` / `work:validate` authoring
+  commands for human and agent contributors.
 - Exhibition (kiosk) mode: a fullscreen presentation mode (toggle button,
   "e" key, or `?exhibit=1` URL param) that auto-advances through presets by
   calling the same preset-selection action a user click would, with a
@@ -48,5 +54,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   diagnostics instead of being clamped away.
 - Project documentation and continuous integration setup.
 
-[Unreleased]: https://github.com/yktsnd/kinetiflux/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/yktsnd/kinetiflux/releases/tag/v0.1.0
+[Unreleased]: https://github.com/yktsnd/dynamusium/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/yktsnd/dynamusium/releases/tag/v0.1.0

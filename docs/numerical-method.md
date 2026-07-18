@@ -3,7 +3,7 @@
 The solver lives in `src/solver/` and has no React or DOM dependency. This
 document describes what it does and, explicitly, what it does not claim to
 do: these are implementation choices suited to the demonstration model
-KinetiFlux ships, not universally correct choices for every dynamical
+DynaMusium's legacy reaction instrument ships, not universally correct choices for every dynamical
 system.
 
 ## Method: classical fixed-step RK4

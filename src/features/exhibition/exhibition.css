@@ -41,11 +41,14 @@
   justify-content: center;
   gap: var(--space-2);
   text-align: center;
-  background: var(--bg);
+  background: radial-gradient(circle at 50% 45%, rgba(13, 52, 76, 0.88), rgba(2, 9, 20, 0.98) 52%);
   padding: 0 var(--space-5);
 }
 .caption.is-prominent .caption-kicker {
   font-size: 13px;
+}
+.caption.is-prominent .caption-heading {
+  justify-content: center;
 }
 .caption.is-prominent .caption-tagline {
   font-size: 20px;

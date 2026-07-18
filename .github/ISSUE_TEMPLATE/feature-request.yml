@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose an enhancement to KinetiFlux.
+description: Propose an enhancement to DynaMusium.
 title: '[Feature]: '
 labels:
   - enhancement
@@ -28,7 +28,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Scope note:** the current version of KinetiFlux deliberately excludes a
-        graphical model editor and npm package publishing. Requests in these areas
-        may be closed as out of scope unless there is a concrete, narrowly-scoped
-        proposal.
+        **Scope note:** DynaMusium accepts sourced scientific works and museum
+        experience improvements. Runtime uploads, accounts, server-side services,
+        and unsourced placeholder works remain out of scope.

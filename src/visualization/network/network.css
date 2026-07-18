@@ -6,6 +6,8 @@
   margin: 0 auto;
   /* Keep the scene legible on narrow screens: scroll instead of shrinking. */
   min-width: 620px;
+  overflow: visible;
+  filter: drop-shadow(0 14px 28px rgba(0, 5, 12, 0.35));
 }
 
 /* Vessels */
@@ -17,11 +19,13 @@
   fill: none;
   stroke: var(--line-strong);
   stroke-width: 1.5;
+  filter: drop-shadow(0 0 2px rgba(160, 222, 241, 0.12));
 }
 .vessel.is-selected .vessel-edge,
 .vessel:focus-visible .vessel-edge {
   stroke: var(--text-1);
   stroke-width: 2;
+  filter: drop-shadow(0 0 5px rgba(190, 241, 255, 0.45));
 }
 .vessel:focus-visible .vessel-edge {
   stroke-dasharray: 5 4;
@@ -35,6 +39,8 @@
   font-size: 20px;
   font-weight: 600;
   fill: var(--text-1);
+  letter-spacing: 0.04em;
+  filter: drop-shadow(0 0 9px rgba(165, 228, 247, 0.18));
 }
 .vessel-label {
   font-family: var(--font-ui);
@@ -63,6 +69,7 @@
 .channel-lane {
   stroke-linecap: round;
   transition: stroke-opacity var(--dur-fast) var(--ease-out);
+  filter: drop-shadow(0 0 2px currentColor);
 }
 .channel.is-selected .channel-lane {
   stroke-opacity: 0.75;
@@ -84,6 +91,7 @@
 /* Particles */
 .particle {
   pointer-events: none;
+  filter: drop-shadow(0 0 3px currentColor);
 }
 
 /* Feed */
@@ -99,6 +107,7 @@
   fill: none;
   stroke: var(--feed);
   stroke-width: 1.6;
+  filter: drop-shadow(0 0 3px rgba(152, 206, 230, 0.28));
 }
 .feed-spark-dot {
   fill: var(--text-1);

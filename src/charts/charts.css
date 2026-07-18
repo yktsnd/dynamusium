@@ -1,5 +1,6 @@
 .chart-strip {
   height: clamp(80px, 11vh, 130px);
+  position: relative;
 }
 
 .chart-plot {
@@ -8,6 +9,11 @@
   height: 100%;
   touch-action: none;
   cursor: crosshair;
+  overflow: visible;
+}
+
+.chart-plot > path {
+  filter: drop-shadow(0 0 2px rgba(127, 211, 236, 0.18));
 }
 
 .chart-grid {
@@ -23,6 +29,7 @@
 .chart-cursor {
   stroke: var(--cursor);
   stroke-width: 1.25;
+  filter: drop-shadow(0 0 4px rgba(188, 239, 255, 0.32));
 }
 .chart-hover-cursor {
   stroke: var(--hover-cursor);
@@ -37,4 +44,5 @@
 .chart-readout-value {
   font-size: 10px;
   fill: var(--text-1);
+  letter-spacing: 0.03em;
 }

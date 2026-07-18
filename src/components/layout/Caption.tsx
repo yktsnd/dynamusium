@@ -15,7 +15,11 @@ export function Caption({ prominent = false }: { prominent?: boolean }) {
 
   return (
     <div className={`caption${prominent ? ' is-prominent' : ''}`}>
-      <p className="caption-kicker t-label">{model.name}</p>
+      <div className="caption-heading">
+        <span className="caption-signal" aria-hidden="true" />
+        <p className="caption-kicker t-label">{model.name}</p>
+        <span className="caption-mode t-num">LIVE MODEL / RK4</span>
+      </div>
       {active && <p className="caption-tagline">{active.tagline}</p>}
     </div>
   );

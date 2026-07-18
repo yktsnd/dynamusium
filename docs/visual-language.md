@@ -136,6 +136,21 @@ motion — only the animated particle stream is removed.
 
 ## Visual identity
 
+### The "Abyss Observatory" environment
+
+The instrument sits inside a restrained cosmic/deep-ocean environment: an
+original horizon image, two orbital hairlines, isolated observation stars,
+and small coordinate/depth readouts. `App.tsx` groups this entire layer under
+`.ambient-scene` with `aria-hidden="true"`; it is atmosphere only and never
+represents model state, rate, quantity, selection, or validity. A dark mask
+keeps the network and traces on the validated deep-ink ground, while the
+existing categorical data palette remains unchanged.
+
+The background image lives at `public/cosmic-abyss.png` so the Vite base-path
+configuration can serve it both locally and from GitHub Pages. Reduced-motion
+mode leaves the static environment intact and disables the only ambient pulse,
+the caption's live-signal dot.
+
 ### The "Quiet Instrument" identity
 
 The whole viewport is the field: `App.tsx` composes a top rail, a museum
@@ -227,7 +242,7 @@ larger-type, full-viewport interstitial shown between auto-advanced presets
 
 ### Single "deep ink" theme
 
-KinetiFlux ships one dark theme (`src/design-system/tokens.css`), by design,
+DynaMusium ships one dark theme (`src/design-system/tokens.css`), by design,
 rather than a light theme and a dark theme. The rationale: one exceptionally
 polished, fully validated theme is worth more than two incomplete ones, and a
 dark ground (`--bg: #0b0e15`) makes translucent fills and small particles

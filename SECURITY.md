@@ -2,7 +2,7 @@
 
 ## Scope
 
-KinetiFlux is a fully client-side static web application: it has no server
+DynaMusium is a fully client-side static web application: it has no server
 component, no backend, and no data collection. Almost all realistic security
 concerns are therefore about the dependency and build chain (npm packages,
 the Vite/TypeScript toolchain, and the GitHub Actions used to build and
@@ -24,7 +24,7 @@ vulnerability."** Do not open a public issue for a suspected vulnerability.
 
 When reporting, please include:
 
-- the KinetiFlux version or commit hash you tested,
+- the DynaMusium version or commit hash you tested,
 - the browser (and version) used,
 - clear reproduction steps,
 - your assessment of the impact.
