@@ -26,6 +26,9 @@ describe('DynaMusium catalog', () => {
       const first = simulateWork(work, {});
       const second = simulateWork(work, {});
       expect(first.series.length, work.slug).toBeGreaterThan(0);
+      expect(new Set(first.series.map((series) => series.id)).size, work.slug).toBe(
+        first.series.length,
+      );
       expect(first.points.length, work.slug).toBeGreaterThan(10);
       expect(first.series.map((series) => series.values.slice(0, 8))).toEqual(
         second.series.map((series) => series.values.slice(0, 8)),
@@ -37,5 +40,36 @@ describe('DynaMusium catalog', () => {
         expect(first.field.values.every(Number.isFinite), `${work.slug}/field`).toBe(true);
       }
     }
+  });
+
+  it('keeps every preset and parameter boundary finite', () => {
+    for (const work of works) {
+      const inputs = [
+        ...work.presets.map((preset) => preset.values),
+        ...work.parameters.flatMap((parameter) => [
+          { [parameter.id]: parameter.min },
+          { [parameter.id]: parameter.max },
+        ]),
+      ];
+      for (const values of inputs) {
+        const result = simulateWork(work, values);
+        expect(result.series.length, work.slug).toBeGreaterThan(0);
+        for (const series of result.series) {
+          expect(series.values.every(Number.isFinite), `${work.slug}/${series.id}`).toBe(true);
+        }
+        if (result.field) {
+          expect(result.field.values.every(Number.isFinite), `${work.slug}/field`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('uses live primary-source links for the repaired historical works', () => {
+    expect(works.find((work) => work.slug === 'wave-equation')?.citations[0]?.url).toBe(
+      'https://epiphymaths.univ-fcomte.fr/1t1m/d_alembert-recherches_sur_la_courbe_que_forme_une_corde_tendue_mise_en_vibration-1747.pdf',
+    );
+    expect(works.find((work) => work.slug === 'kepler-orbit')?.citations[0]?.url).toBe(
+      'https://doi.org/10.5479/sil.126675.39088002685477',
+    );
   });
 });

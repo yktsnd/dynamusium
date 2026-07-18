@@ -55,7 +55,7 @@ function resultFromStates(
   diagnostics = 'Deterministic numerical trajectory',
 ): WorkResult {
   const series: Series[] = labels.map((label, index) => ({
-    id: label.toLowerCase().replace(/\W+/g, '-'),
+    id: `${label.toLowerCase().replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'series'}-${index}`,
     label,
     color: palette[index % palette.length] ?? '#fff',
     values: states.map((state) => finite(state[index] ?? 0)),
