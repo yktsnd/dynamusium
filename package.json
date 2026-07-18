@@ -1,13 +1,13 @@
 {
-  "name": "kinetiflux",
+  "name": "dynamusium",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Interactive reaction-kinetics and dynamic-flow visualization",
+  "description": "An interactive museum of dynamic systems across science",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yktsnd/kinetiflux.git"
+    "url": "https://github.com/yktsnd/dynamusium.git"
   },
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "work:new": "node scripts/work-new.mjs",
+    "work:validate": "node scripts/validate-works.mjs",
+    "work:preview": "vite",
+    "work:capture": "node scripts/capture-screens.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

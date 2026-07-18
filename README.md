@@ -1,109 +1,76 @@
-<p align="center">
-  <img src="docs/media/mark.svg" width="72" alt="KinetiFlux mark: a vessel with a level fill and an inbound particle" />
-</p>
+<div align="center">
+  <img src="docs/media/mark.svg" width="72" alt="DynaMusium mark" />
 
-# KinetiFlux
+# DynaMusium
 
-Interactive reaction-kinetics and dynamic-flow visualization — watch quantities, rates, flows,
-and collected output move through a dynamic model.
+**Museum of Dynamic Systems**
 
-[![CI](https://github.com/yktsnd/kinetiflux/actions/workflows/ci.yml/badge.svg)](https://github.com/yktsnd/kinetiflux/actions/workflows/ci.yml)
-[![Deploy](https://github.com/yktsnd/kinetiflux/actions/workflows/deploy.yml/badge.svg)](https://github.com/yktsnd/kinetiflux/actions/workflows/deploy.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+Thirty interactive mathematical models across motion, matter, life, Earth, and the cosmos.
+</div>
 
-![KinetiFlux showing the fed reaction chain demonstration model](docs/media/hero.png)
+DynaMusium treats a scientific model as a cultural object: something to observe, operate,
+question, source, and preserve. Every work is computed in the browser and connects its
+trajectory or spatial field to live controls, synchronized traces, equations, citations, and
+an accessible data table.
 
-**[Live demo](https://yktsnd.github.io/kinetiflux/)** — deploys automatically from `main` via
-GitHub Pages.
+## The collection
 
-## What it does
+| Gallery          | Works                                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| Motion & Chaos   | Double Pendulum, Kuramoto Oscillators, FPUT Chain, Logistic Map, Wave Equation, Standard Map         |
+| Matter & Pattern | Fed Reaction Chain, Gray–Scott, Heat/Diffusion, Schrödinger Wave Packet, Ising Model, Cahn–Hilliard  |
+| Life & Reaction  | Lotka–Volterra, Brusselator, Oregonator, SIR, Hodgkin–Huxley, FitzHugh–Nagumo                        |
+| Earth & Climate  | Lorenz Atmosphere, Stommel Box, Daisyworld, Carbon Cycle, Shallow-Water, Budyko–Sellers              |
+| Cosmos & Gravity | Restricted Three-Body, Kepler Orbit, Hohmann Transfer, N-Body, Friedmann–Lemaître, Exoplanet Transit |
 
-- An animated network view driven by a real ODE solution — not a canned animation.
-- Four curated presets showing distinct dynamic regimes (steady feed, a pulse relay, a tidal
-  feed, and a closed equilibrium).
-- Synchronized quantity and rate charts sharing one time cursor with the network view.
-- A directional view (separate forward/reverse lanes) and a net view (one signed lane) for
-  reversible processes.
-- A parameters drawer with instant recomputation — every change re-integrates the whole
-  trajectory synchronously.
-- An exhibition (kiosk) mode: fullscreen, auto-advancing through presets with scene-transition
-  captions, for unattended display.
-- Full reduced-motion support, independent of and overriding the OS preference.
-- A deterministic, fixed-step RK4 numerical core with tested invariants (see
-  [`AGENTS.md`](./AGENTS.md#numerical-invariants)).
+The first six are flagship rooms with a deliberately cinematic observation mode. The other
+twenty-four use the same museum-grade interaction, provenance, and accessibility contract.
 
-## How to read it
+## Run locally
 
-- **Fill height** of a vessel = quantity, linear against its display capacity.
-- **Channel width** = instantaneous rate, on a square-root scale so rendered area tracks rate.
-- **Particle frequency** = amount actually moved (integrated rate through a fixed quantum) — not
-  particle speed, which is a fixed wall-clock travel time and carries no rate meaning.
-- **Direction** = chevrons plus particle travel direction, backed by offset lanes for reversible
-  processes in directional view.
-- **Basin fill** = cumulative collected output; it only ever rises.
-- **Charts** plot the same trajectory the network view renders from — never a separate
-  computation.
-
-Full encoding reference: [`docs/visual-language.md`](docs/visual-language.md).
-
-![Narrow layout](docs/media/responsive.png)
-
-## Quick start
-
-```
-git clone https://github.com/yktsnd/kinetiflux.git
-cd kinetiflux
-npm install
+```bash
+git clone https://github.com/yktsnd/dynamusium.git
+cd dynamusium
+npm ci
 npm run dev
 ```
 
-## Development commands
+Validation:
 
-| Task                   | Command                                                                    |
-| ---------------------- | -------------------------------------------------------------------------- |
-| Install                | `npm install` (CI: `npm ci`)                                               |
-| Develop                | `npm run dev`                                                              |
-| Unit + numerical tests | `npm test`                                                                 |
-| Watch tests            | `npm run test:watch`                                                       |
-| E2E tests              | `npx playwright install chromium` once, then `npm run test:e2e`            |
-| Lint                   | `npm run lint`                                                             |
-| Type check             | `npm run typecheck`                                                        |
-| Format                 | `npm run format` (check: `npm run format:check`)                           |
-| Production build       | `npm run build`                                                            |
-| Preview build          | `npm run preview`                                                          |
-| **Full validation**    | **`npm run check`** (format check → lint → typecheck → unit tests → build) |
+```bash
+npm run check
+npm run test:e2e
+npm run work:validate
+```
 
-## Architecture, briefly
+The application is static, client-only, and deploys to GitHub Pages. It has no account,
+backend, analytics, upload surface, or persistent storage.
 
-A model definition (species, processes, parameters, an input profile) is compiled into an ODE
-system and integrated once with fixed-step RK4 into an immutable trajectory. Playback and
-scrubbing only ever select a time within that trajectory — they never recompute it. Every view
-(the animated network, both charts, the readouts) renders from that same trajectory object, so
-nothing on screen can disagree with anything else. Model and solver code are plain TypeScript
-with no React or DOM dependency.
+## Add a work
 
-Full detail, with a data-flow diagram: [`docs/architecture.md`](docs/architecture.md). Repository
-map and standard commands: [`AGENTS.md`](./AGENTS.md).
+```bash
+npm run work:new -- rossler-attractor "Rössler Attractor"
+```
 
-## Roadmap
+This creates a JSON manifest under `src/works/community/`. Complete its scientific metadata,
+register or reuse a deterministic kernel, then run `npm run work:validate` and the test suite.
+There is no central hand-maintained registry: community manifests are discovered at build
+time. See [CONTRIBUTING_WORKS.md](./CONTRIBUTING_WORKS.md) for the full contract.
 
-- A model gallery and shareable parameter URLs.
-- More rate laws beyond first-order mass action.
-- Chart data table export.
-- A second theme, only if it can match the current theme's quality.
+## Architecture
 
-## Contributing
+- `src/museum/catalog.ts` — the thirty-work permanent collection and dynamic manifest discovery.
+- `src/museum/simulation.ts` — deterministic ODE, discrete, field, and analytic kernels.
+- `src/museum/MuseumApp.tsx` — Entrance, Collection, Observe, Study, and Exhibit experiences.
+- `src/works/work.schema.json` — machine-readable contribution contract.
+- `src/model/`, `src/solver/`, `src/state/` — the preserved, rigorously tested reaction-network core.
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for local setup, branch/PR expectations, and
-design/numerical change requirements. Participation is governed by the
-[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
+The visual atmosphere never encodes scientific values. Data color, position, trace, and motion
+are derived from the computed result; the cosmic/deep-ocean environment remains a separate,
+decorative layer.
 
 ## License
 
-[MIT](./LICENSE)
-
-## Acknowledgements
-
-- Code of Conduct adapted from the [Contributor Covenant](https://www.contributor-covenant.org/).
-- Typefaces: [Inter](https://fontsource.org/fonts/inter), [Space Grotesk](https://fontsource.org/fonts/space-grotesk),
-  and [JetBrains Mono](https://fontsource.org/fonts/jetbrains-mono), via [Fontsource](https://fontsource.org/).
+Code and original museum copy are released under the [MIT License](./LICENSE). Equations are
+facts; citations identify the historical or canonical sources used to define each work. No
+third-party stock imagery is distributed with the museum.

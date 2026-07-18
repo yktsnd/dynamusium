@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          KINETIFLUX_BASE: /kinetiflux/
+          DYNAMUSIUM_BASE: /${{ github.event.repository.name }}/
       - uses: actions/configure-pages@v5
         with:
           # Create/enable the Pages site (build type: GitHub Actions) on first run.

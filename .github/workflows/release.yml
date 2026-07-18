@@ -9,7 +9,7 @@ on:
       tag:
         description: 'Release tag (created on the current commit if it does not exist)'
         required: true
-        default: 'v0.1.0'
+        default: 'v1.0.0'
 
 permissions:
   contents: write
@@ -26,34 +26,25 @@ jobs:
           node-version: 22
           cache: 'npm'
       - run: npm ci
+      - run: npm run work:validate
       - run: npm run build
+        env:
+          DYNAMUSIUM_BASE: /${{ github.event.repository.name }}/
       - name: Package build output
-        run: tar -czf "kinetiflux-${RELEASE_TAG}.tar.gz" -C dist .
+        run: tar -czf "dynamusium-${RELEASE_TAG}.tar.gz" -C dist .
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: KinetiFlux ${{ env.RELEASE_TAG }}
+          name: DynaMusium ${{ env.RELEASE_TAG }}
           generate_release_notes: true
-          files: kinetiflux-${{ env.RELEASE_TAG }}.tar.gz
+          files: dynamusium-${{ env.RELEASE_TAG }}.tar.gz
           body: |
-            **KinetiFlux** — interactive reaction-kinetics and dynamic-flow visualization.
+            **DynaMusium — Museum of Dynamic Systems**
 
-            Watch quantities, rates, flow directions, and collected output move through a
-            deterministic physical-chemistry model: an animated network driven by a real
-            fixed-step RK4 solution, four curated presets, directional/net views for the
-            reversible process, synchronized quantity/rate charts with a shared time cursor,
-            a parameter inspector with instant recomputation, typed numerical-safety results
-            (failures beyond tolerance halt playback with explicit diagnostics instead of
-            being clamped away), reduced-motion support, and a responsive UI.
+            Explore thirty sourced, deterministic, interactive works across motion and chaos,
+            matter and pattern, life and reaction, Earth and climate, and cosmos and gravity.
+            Every room connects a computed trajectory or field to live controls, synchronized
+            traces, curator context, equations, citations, and an accessible data table.
 
-            The repository ships AI-ready documentation (`AGENTS.md`, architecture / model
-            contract / numerical method / visual language docs, ADRs), OSS community files,
-            issue forms, CI, and a GitHub Pages deploy workflow.
-
-            **Live demo:** https://yktsnd.github.io/kinetiflux/ (activates once GitHub Pages
-            is enabled for this repository).
-
-            **Known limitations:** fixed-step RK4 is not suited to stiff systems; no
-            screen-reader data-table alternative for the charts yet (#9); no animated README
-            demo yet (#10).
+            **Live museum:** https://yktsnd.github.io/dynamusium/

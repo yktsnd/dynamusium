@@ -14,6 +14,7 @@ body,
 body {
   background: var(--bg);
   overflow: hidden;
+  color: var(--text-1);
 }
 
 #root {
@@ -23,10 +24,131 @@ body {
 }
 
 .app-root {
+  position: relative;
+  isolation: isolate;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  background:
+    radial-gradient(circle at 74% 22%, rgba(49, 138, 181, 0.11), transparent 24%),
+    radial-gradient(circle at 24% 38%, rgba(74, 82, 166, 0.08), transparent 28%),
+    linear-gradient(180deg, transparent 0 60%, rgba(2, 9, 20, 0.96) 76%);
+}
+
+.app-root > :not(.ambient-scene) {
+  position: relative;
+  z-index: 2;
+}
+
+.ambient-scene {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-image {
+  position: absolute;
+  inset: 0 0 32%;
+  background: url('/cosmic-abyss.png') 50% 58% / cover no-repeat;
+  opacity: 0.26;
+  filter: saturate(0.82) contrast(1.08) brightness(0.78);
+  mask-image: linear-gradient(to bottom, black 0 54%, transparent 100%);
+}
+
+.ambient-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(2, 9, 20, 0.78), transparent 28% 74%, rgba(2, 9, 20, 0.56)),
+    linear-gradient(180deg, rgba(2, 9, 20, 0.35), transparent 45%, var(--bg));
+}
+
+.ambient-orbit {
+  position: absolute;
+  border: 1px solid rgba(140, 225, 250, 0.12);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.ambient-orbit-wide {
+  width: 82vw;
+  height: 31vw;
+  top: 5vh;
+  right: -27vw;
+}
+
+.ambient-orbit-tight {
+  width: 42vw;
+  height: 16vw;
+  top: 14vh;
+  right: -9vw;
+  transform: rotate(28deg);
+}
+
+.ambient-orbit::after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #dffaff;
+  box-shadow: 0 0 12px 3px rgba(120, 232, 255, 0.65);
+}
+
+.ambient-orbit-wide::after {
+  left: 14%;
+  top: 76%;
+}
+.ambient-orbit-tight::after {
+  right: 8%;
+  top: 24%;
+}
+
+.ambient-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 9px 2px rgba(121, 228, 255, 0.75);
+}
+
+.ambient-star-one {
+  top: 19%;
+  left: 11%;
+}
+.ambient-star-two {
+  top: 31%;
+  right: 16%;
+}
+
+.ambient-horizon {
+  position: absolute;
+  top: 48%;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(132, 228, 252, 0.24), transparent);
+  box-shadow: 0 0 34px rgba(75, 199, 232, 0.12);
+}
+
+.ambient-readout {
+  position: absolute;
+  top: 50.5%;
+  color: rgba(137, 199, 220, 0.34);
+  font: 500 8px/1 var(--font-mono);
+  letter-spacing: 0.16em;
+}
+
+.ambient-readout-left {
+  left: 2.2%;
+}
+.ambient-readout-right {
+  right: 2.2%;
 }
 
 @media (max-width: 1100px) {
@@ -42,7 +164,19 @@ select {
 }
 
 ::selection {
-  background: rgba(57, 135, 229, 0.4);
+  color: var(--bg);
+  background: rgba(133, 229, 255, 0.88);
+}
+
+@media (max-width: 1100px) {
+  .ambient-image {
+    bottom: 46%;
+    background-position: 58% 45%;
+  }
+  .ambient-readout,
+  .ambient-orbit-tight {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

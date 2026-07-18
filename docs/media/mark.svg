@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="64" height="64">
-  <title>KinetiFlux mark</title>
-  <rect x="1" y="1" width="30" height="30" rx="8" fill="#151b27" stroke="#3a4356" stroke-width="1"/>
-  <rect x="12" y="7" width="12" height="18" rx="3.5" fill="none" stroke="#9aa6bb" stroke-width="1.5"/>
-  <path d="M14 16.5 h8 v5 a1.5 1.5 0 0 1 -1.5 1.5 h-5 a1.5 1.5 0 0 1 -1.5 -1.5 Z" fill="#c98500"/>
-  <path d="M4 12 q4 0 6 3" fill="none" stroke="#3987e5" stroke-width="1.5" stroke-linecap="round"/>
-  <circle cx="7.4" cy="13.1" r="2" fill="#3987e5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42" width="84" height="84">
+  <title>DynaMusium mark: a phase trajectory passing through a museum arch</title>
+  <rect width="42" height="42" rx="11" fill="#03101c" stroke="#173348"/>
+  <path d="M7 32V20a14 14 0 0 1 28 0v12M12 31c5-17 13 15 19-8" fill="none" stroke="#98ecff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="23" r="2.2" fill="#e4fbff"/>
 </svg>

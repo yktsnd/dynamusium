@@ -30,8 +30,8 @@ export function TopRail({ exhibitMode, onToggleExhibit }: Props) {
     <header className="rail">
       <a
         className="rail-brand"
-        href="https://github.com/yktsnd/kinetiflux"
-        aria-label="KinetiFlux on GitHub"
+        href="https://github.com/yktsnd/dynamusium"
+        aria-label="DynaMusium on GitHub"
       >
         <BrandMark size={18} />
         <span className="rail-word t-display">

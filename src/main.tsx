@@ -13,9 +13,12 @@ declare global {
   interface Window {
     /** Debug/e2e handle to the simulation store (same access devtools already have). */
     __KINETIFLUX_STORE__?: typeof useSimulationStore;
+    /** Backwards-compatible handle while the repository completes its DynaMusium cutover. */
+    __DYNAMUSIUM_STORE__?: typeof useSimulationStore;
   }
 }
 window.__KINETIFLUX_STORE__ = useSimulationStore;
+window.__DYNAMUSIUM_STORE__ = useSimulationStore;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

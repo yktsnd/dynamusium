@@ -1,5 +1,5 @@
 /*
- * KinetiFlux design tokens — single dark "deep ink" theme.
+ * DynaMusium design tokens — single dark "deep ink" theme.
  *
  * Species/reservoir palette is CVD-validated (adjacent + all pairs) against
  * --bg with the dataviz six-check validator; do not change one color without
@@ -9,21 +9,21 @@
 :root {
   /* Surfaces */
   --bg: #0b0e15;
-  --surface-1: #10141d;
-  --surface-2: #151b27;
-  --surface-3: #1b2231;
-  --line: rgba(154, 168, 196, 0.14);
-  --line-strong: rgba(154, 168, 196, 0.3);
+  --surface-1: #071321;
+  --surface-2: #0a1929;
+  --surface-3: #10263a;
+  --line: rgba(145, 211, 234, 0.13);
+  --line-strong: rgba(157, 220, 241, 0.3);
 
   /* Ink */
-  --text-1: #eaeef6;
-  --text-2: #9aa6bb;
-  --text-3: #6b7890;
+  --text-1: #edfaff;
+  --text-2: #9db9c8;
+  --text-3: #628194;
 
   /* Interactive */
-  --accent: #eaeef6;
+  --accent: #bcefff;
   --accent-ink: #0b0e15;
-  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(234, 238, 246, 0.85);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(120, 224, 255, 0.9);
 
   /* Data palette (validated as a set, in this adjacency order) */
   --species-a: #c98500;
@@ -36,21 +36,21 @@
   --feed: #8fa3c4;
 
   /* Chart chrome */
-  --grid: rgba(154, 168, 196, 0.1);
-  --cursor: rgba(234, 238, 246, 0.55);
-  --hover-cursor: rgba(234, 238, 246, 0.3);
+  --grid: rgba(131, 198, 222, 0.09);
+  --cursor: rgba(204, 245, 255, 0.6);
+  --hover-cursor: rgba(158, 226, 246, 0.3);
 
   /* Signal (text-only; never used as a data-series color) */
   --signal-invalid: #e5786d;
 
   /* Instrument layout */
-  --rail-h: 48px;
+  --rail-h: 64px;
   --drawer-w: 360px;
   --readout-w: 110px;
 
   /* Geometry */
-  --radius-panel: 12px;
-  --radius-control: 8px;
+  --radius-panel: 18px;
+  --radius-control: 999px;
   --radius-vessel: 10px;
 
   /* Spacing rhythm (4px base) */

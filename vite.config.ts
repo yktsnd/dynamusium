@@ -2,10 +2,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// KINETIFLUX_BASE lets the GitHub Pages workflow build for a repository
-// subpath (e.g. "/kinetiflux/") without affecting local development.
+// The new name is primary; the legacy variable keeps existing deployments
+// working until the repository is renamed through the GitHub API.
 export default defineConfig({
-  base: process.env.KINETIFLUX_BASE ?? '/',
+  base: process.env.DYNAMUSIUM_BASE ?? process.env.KINETIFLUX_BASE ?? '/',
   plugins: [react()],
   test: {
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
