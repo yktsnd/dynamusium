@@ -28,7 +28,7 @@ jobs:
       - run: npm run build
         env:
           DYNAMUSIUM_BASE: /${{ github.event.repository.name }}/
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         with:
           # Create/enable the Pages site (build type: GitHub Actions) on first run.
           enablement: true
