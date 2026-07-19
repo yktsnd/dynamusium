@@ -1,3 +1,10 @@
+import type {
+  FieldFrameV2,
+  PortraitManifestExtension,
+  RunCheckResult,
+  RunProvenance,
+} from './portrait-types.ts';
+
 export type GalleryId =
   'motion-chaos' | 'matter-pattern' | 'life-reaction' | 'earth-climate' | 'cosmos-gravity';
 
@@ -27,8 +34,7 @@ export interface WorkCitation {
   url: string;
 }
 
-export interface WorkManifest {
-  schemaVersion: 1;
+interface WorkManifestBase {
   slug: string;
   title: string;
   subtitle: string;
@@ -48,6 +54,18 @@ export interface WorkManifest {
   citations: WorkCitation[];
 }
 
+export interface WorkManifestV1 extends WorkManifestBase {
+  schemaVersion: 1;
+  portrait?: never;
+}
+
+export interface WorkManifestV2 extends WorkManifestBase {
+  schemaVersion: 2;
+  portrait: PortraitManifestExtension;
+}
+
+export type WorkManifest = WorkManifestV1 | WorkManifestV2;
+
 export interface Series {
   id: string;
   label: string;
@@ -64,15 +82,30 @@ export interface FieldFrame {
   columns: number;
   rows: number;
   values: number[];
+  componentId?: string;
+  valueDomain?: readonly [number, number];
 }
 
 export interface WorkResult {
   duration: number;
+  /** Wall-clock curation time; scientific time remains in `times`. */
+  presentationDuration?: number;
   times: number[];
   series: Series[];
   points: TrajectoryPoint[];
   field?: FieldFrame;
   diagnostics: string;
+  numerical?: {
+    provenance: RunProvenance;
+    checks: RunCheckResult[];
+    fieldFrames?: FieldFrameV2[];
+    state?: {
+      coordinateIds: string[];
+      shape: readonly [number, number];
+      /** Time-major raw state values; never screen coordinates. */
+      values: number[];
+    };
+  };
 }
 
 export type MuseumMode = 'observe' | 'study' | 'exhibit';

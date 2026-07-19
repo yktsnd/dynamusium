@@ -47,7 +47,10 @@ test('a visitor can enter, pause, scrub, tune, and open the study view', async (
   await expect(page.getByRole('group', { name: 'Simulation preset' })).toBeVisible();
   await expect(page.locator('.study-panel')).toBeVisible();
   await expect(page.locator('.study-panel table')).toBeVisible();
-  await expect(page.locator('.study-panel')).toContainText('Deterministic Nonperiodic Flow');
+  await expect(page.locator('.study-panel')).toContainText('Numerical provenance');
+  await expect(page.locator('.study-panel')).toContainText('Visual encoding');
+  await expect(page.locator('.study-panel')).toContainText('deterministic replay');
+  await expect(page.locator('.study-panel')).toContainText('Definition hash');
 });
 
 test('deep links restore work, viewing mode, and preset', async ({ page }) => {

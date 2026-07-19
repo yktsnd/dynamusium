@@ -1,5 +1,12 @@
 # ADR 0001: Application architecture
 
+**Status:** accepted
+
+**Scope:** preserved specialized reaction-network runtime (`src/model`, `src/solver`,
+`src/state`, and its SVG / chart presentation). The museum-wide runtime is governed by
+[ADR 0006](./0006-dynamical-portrait-runtime.md); this ADR is not a requirement that every museum
+work use Zustand, precomputed RK4, or SVG.
+
 ## Context
 
 KinetiFlux animates the solution of a deterministic ODE system and lets a

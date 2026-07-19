@@ -1,47 +1,112 @@
-import type { FieldFrame, Series, WorkManifest, WorkResult } from './types.ts';
+import type { RuntimeKind, Series, WorkManifest, WorkResult } from './types.ts';
+import { simulateReviewedAnalyticField } from './runtimes/analytic-field-runtime.ts';
+import { simulateReviewedAnalyticOrbit } from './runtimes/analytic-orbital-runtime.ts';
+import { simulateReviewedCollective } from './runtimes/collective-runtime.ts';
+import { simulateReviewedField } from './runtimes/field-runtime.ts';
+import { simulateReviewedFoundation } from './runtimes/foundation-runtime.ts';
 
 type Derivative = (time: number, state: number[]) => number[];
+type StepConstraint = (previous: number[], next: number[], step: number, nextTime: number) => void;
 
 const palette = ['#7ce7ff', '#ffbd59', '#ff6f9f', '#8bf18b', '#b99cff', '#ff8d68'];
 
+function assertFiniteNumber(value: number, context: string): void {
+  if (!Number.isFinite(value)) {
+    throw new Error(`${context} is non-finite (${String(value)}).`);
+  }
+}
+
+function assertFiniteVector(values: number[], expectedLength: number, context: string): void {
+  if (!Array.isArray(values) || values.length !== expectedLength) {
+    const actualLength = Array.isArray(values) ? values.length : 'non-array';
+    throw new Error(`${context} has dimension ${actualLength}; expected ${expectedLength}.`);
+  }
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    if (!Number.isFinite(value)) {
+      throw new Error(`${context}[${index}] is non-finite (${String(value)}).`);
+    }
+  }
+}
+
+function stateValue(state: number[], index: number, context: string): number {
+  if (index < 0 || index >= state.length) {
+    throw new Error(`${context} is missing state index ${index}; dimension is ${state.length}.`);
+  }
+  const value = state[index];
+  if (!Number.isFinite(value)) {
+    throw new Error(`${context}[${index}] is non-finite (${String(value)}).`);
+  }
+  return value;
+}
+
 function parametersFor(work: WorkManifest, overrides: Record<string, number>) {
   return Object.fromEntries(
-    work.parameters.map((parameter) => [
-      parameter.id,
-      overrides[parameter.id] ?? parameter.default,
-    ]),
+    work.parameters.map((parameter) => {
+      const value = overrides[parameter.id] ?? parameter.default;
+      assertFiniteNumber(value, `Parameter "${parameter.id}" for work "${work.slug}"`);
+      return [parameter.id, value];
+    }),
   );
 }
 
-function finite(value: number, fallback = 0) {
-  return Number.isFinite(value) ? Math.max(-1e6, Math.min(1e6, value)) : fallback;
+function derivativeAt(
+  derivative: Derivative,
+  time: number,
+  state: number[],
+  expectedLength: number,
+  context: string,
+): number[] {
+  const values = derivative(time, state);
+  assertFiniteVector(values, expectedLength, `${context} derivative`);
+  return values;
 }
 
-function rk4(initial: number[], duration: number, derivative: Derivative, steps = 720) {
+function stageState(state: number[], slope: number[], scale: number, context: string): number[] {
+  const next = state.map((value, index) => value + scale * slope[index]);
+  assertFiniteVector(next, state.length, context);
+  return next;
+}
+
+export function rk4(
+  initial: number[],
+  duration: number,
+  derivative: Derivative,
+  steps = 720,
+  stepConstraint?: StepConstraint,
+) {
+  assertFiniteNumber(duration, 'RK4 duration');
+  if (duration <= 0) throw new Error(`RK4 duration must be positive; received ${duration}.`);
+  if (!Number.isInteger(steps) || steps <= 0) {
+    throw new Error(`RK4 steps must be a positive integer; received ${steps}.`);
+  }
+  if (initial.length === 0) throw new Error('RK4 initial state must not be empty.');
+  assertFiniteVector(initial, initial.length, 'RK4 initial state');
+
   const dt = duration / steps;
+  assertFiniteNumber(dt, 'RK4 step size');
   const states: number[][] = [initial.slice()];
   const times = [0];
   let state = initial.slice();
   for (let step = 1; step <= steps; step += 1) {
     const time = (step - 1) * dt;
-    const k1 = derivative(time, state);
-    const k2 = derivative(
-      time + dt / 2,
-      state.map((v, i) => v + (dt * (k1[i] ?? 0)) / 2),
+    const prefix = `RK4 step ${step} at t=${time}`;
+    const k1 = derivativeAt(derivative, time, state, initial.length, `${prefix} k1`);
+    const k2State = stageState(state, k1, dt / 2, `${prefix} k2 stage`);
+    const k2 = derivativeAt(derivative, time + dt / 2, k2State, initial.length, `${prefix} k2`);
+    const k3State = stageState(state, k2, dt / 2, `${prefix} k3 stage`);
+    const k3 = derivativeAt(derivative, time + dt / 2, k3State, initial.length, `${prefix} k3`);
+    const k4State = stageState(state, k3, dt, `${prefix} k4 stage`);
+    const k4 = derivativeAt(derivative, time + dt, k4State, initial.length, `${prefix} k4`);
+    const next = state.map(
+      (value, index) => value + (dt / 6) * (k1[index] + 2 * k2[index] + 2 * k3[index] + k4[index]),
     );
-    const k3 = derivative(
-      time + dt / 2,
-      state.map((v, i) => v + (dt * (k2[i] ?? 0)) / 2),
-    );
-    const k4 = derivative(
-      time + dt,
-      state.map((v, i) => v + dt * (k3[i] ?? 0)),
-    );
-    state = state.map((v, i) =>
-      finite(v + (dt / 6) * ((k1[i] ?? 0) + 2 * (k2[i] ?? 0) + 2 * (k3[i] ?? 0) + (k4[i] ?? 0))),
-    );
+    assertFiniteVector(next, initial.length, `${prefix} final state`);
+    const nextTime = step * dt;
+    stepConstraint?.(state, next, step, nextTime);
+    state = next;
     states.push(state);
-    times.push(step * dt);
+    times.push(nextTime);
   }
   return { states, times };
 }
@@ -50,25 +115,91 @@ function resultFromStates(
   duration: number,
   times: number[],
   states: number[][],
-  labels: string[],
+  labels: Array<string | { id: string; label: string }>,
   pointAxes: [number, number] = [0, 1],
   diagnostics = 'Deterministic numerical trajectory',
 ): WorkResult {
-  const series: Series[] = labels.map((label, index) => ({
-    id: `${label.toLowerCase().replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'series'}-${index}`,
-    label,
-    color: palette[index % palette.length] ?? '#fff',
-    values: states.map((state) => finite(state[index] ?? 0)),
-  }));
+  if (times.length !== states.length) {
+    throw new Error(
+      `Result has ${times.length} times but ${states.length} states; the lengths must match.`,
+    );
+  }
+  assertFiniteVector(times, times.length, 'Result times');
+  const series: Series[] = labels.map((entry, index) => {
+    const label = typeof entry === 'string' ? entry : entry.label;
+    const id =
+      typeof entry === 'string'
+        ? label.toLowerCase().replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'series'
+        : entry.id;
+    const color = palette[index % palette.length];
+    if (color === undefined) throw new Error('Simulation series palette is empty.');
+    return {
+      id,
+      label,
+      color,
+      values: states.map((state, stateIndex) =>
+        stateValue(state, index, `Result state ${stateIndex}`),
+      ),
+    };
+  });
   return {
     duration,
     times,
     series,
-    points: states.map((state) => ({
-      x: finite(state[pointAxes[0]] ?? 0),
-      y: finite(state[pointAxes[1]] ?? 0),
+    points: states.map((state, stateIndex) => ({
+      x: stateValue(state, pointAxes[0], `Result point state ${stateIndex}`),
+      y: stateValue(state, pointAxes[1], `Result point state ${stateIndex}`),
     })),
     diagnostics,
+  };
+}
+
+function xOverOneMinusExpNegative(x: number, scale: number): number {
+  if (x === 0) return scale;
+  return -x / Math.expm1(-x / scale);
+}
+
+const CR3BP_EXCLUSION_RADIUS = 0.03;
+
+function distanceFromPointToSegment(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  pointX: number,
+  pointY: number,
+): number {
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  const squaredLength = deltaX * deltaX + deltaY * deltaY;
+  if (squaredLength === 0) return Math.hypot(startX - pointX, startY - pointY);
+  const projection = ((pointX - startX) * deltaX + (pointY - startY) * deltaY) / squaredLength;
+  if (projection <= 0) return Math.hypot(startX - pointX, startY - pointY);
+  if (projection >= 1) return Math.hypot(endX - pointX, endY - pointY);
+  return Math.hypot(startX + projection * deltaX - pointX, startY + projection * deltaY - pointY);
+}
+
+function assertCr3bpPosition(x: number, y: number, mu: number, context: string): void {
+  const distanceToPrimaryOne = Math.hypot(x + mu, y);
+  const distanceToPrimaryTwo = Math.hypot(x - 1 + mu, y);
+  if (
+    distanceToPrimaryOne <= CR3BP_EXCLUSION_RADIUS ||
+    distanceToPrimaryTwo <= CR3BP_EXCLUSION_RADIUS
+  ) {
+    throw new Error(
+      `CR3BP close-encounter event ${context} entered the declared ${CR3BP_EXCLUSION_RADIUS} exclusion radius.`,
+    );
+  }
+}
+
+export function hodgkinHuxleyAlphaRates(voltage: number): {
+  alphaM: number;
+  alphaN: number;
+} {
+  assertFiniteNumber(voltage, 'Hodgkin-Huxley voltage');
+  return {
+    alphaM: 0.1 * xOverOneMinusExpNegative(voltage + 40, 10),
+    alphaN: 0.01 * xOverOneMinusExpNegative(voltage + 55, 10),
   };
 }
 
@@ -110,13 +241,29 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         },
         1100,
       );
-      const positions = solved.states.map(([a = 0, b = 0]) => [
-        Math.sin(a) + Math.sin(b),
-        -Math.cos(a) - Math.cos(b),
-        a,
-        b,
-      ]);
-      return resultFromStates(d, solved.times, positions, ['Tip x', 'Tip y', 'Arm θ₁', 'Arm θ₂']);
+      const stateAndTip = solved.states.map((state, stateIndex) => {
+        const theta1 = stateValue(state, 0, `Double pendulum state ${stateIndex}`);
+        const theta2 = stateValue(state, 1, `Double pendulum state ${stateIndex}`);
+        return [
+          ...state,
+          Math.sin(theta1) + Math.sin(theta2),
+          -Math.cos(theta1) - Math.cos(theta2),
+        ];
+      });
+      return resultFromStates(
+        d,
+        solved.times,
+        stateAndTip,
+        [
+          { id: 'theta1', label: 'Arm θ₁' },
+          { id: 'theta2', label: 'Arm θ₂' },
+          { id: 'omega1', label: 'Angular velocity ω₁' },
+          { id: 'omega2', label: 'Angular velocity ω₂' },
+          { id: 'tip-x', label: 'Tip x' },
+          { id: 'tip-y', label: 'Tip y' },
+        ],
+        [4, 5],
+      );
     }
     case 'kuramoto': {
       const coupling = p.coupling ?? 1.8;
@@ -132,13 +279,13 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         (_t, state) =>
           state.map((theta, i) => {
             const pull = state.reduce((sum, other) => sum + Math.sin(other - theta), 0) / count;
-            return (frequencies[i] ?? 0) + coupling * pull;
+            return stateValue(frequencies, i, 'Kuramoto frequencies') + coupling * pull;
           }),
       );
       const order = solved.states.map((state) => {
         const x = state.reduce((sum, theta) => sum + Math.cos(theta), 0) / count;
         const y = state.reduce((sum, theta) => sum + Math.sin(theta), 0) / count;
-        return [x, y, Math.hypot(x, y), state[0] ?? 0];
+        return [x, y, Math.hypot(x, y), stateValue(state, 0, 'Kuramoto state')];
       });
       return resultFromStates(d, solved.times, order, [
         'Collective x',
@@ -162,8 +309,8 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
           const q = state.slice(0, n);
           const velocity = state.slice(n);
           const acceleration = q.map((value, i) => {
-            const left = i === 0 ? 0 : (q[i - 1] ?? 0);
-            const right = i === n - 1 ? 0 : (q[i + 1] ?? 0);
+            const left = i === 0 ? 0 : stateValue(q, i - 1, 'FPUT positions');
+            const right = i === n - 1 ? 0 : stateValue(q, i + 1, 'FPUT positions');
             return left - 2 * value + right + alpha * ((right - value) ** 2 - (value - left) ** 2);
           });
           return [...velocity, ...acceleration];
@@ -171,10 +318,10 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         1000,
       );
       const modes = solved.states.map((state) => [
-        state[0] ?? 0,
-        state[2] ?? 0,
-        state[4] ?? 0,
-        state[6] ?? 0,
+        stateValue(state, 0, 'FPUT result state'),
+        stateValue(state, 2, 'FPUT result state'),
+        stateValue(state, 4, 'FPUT result state'),
+        stateValue(state, 6, 'FPUT result state'),
       ]);
       return resultFromStates(d, solved.times, modes, ['Mass 1', 'Mass 3', 'Mass 5', 'Mass 7']);
     }
@@ -196,25 +343,33 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         a - (b + 1) * x + x * x * y,
         b * x - x * x * y,
       ]);
-      return resultFromStates(d, solved.times, solved.states, ['Activator X', 'Intermediate Y']);
+      return resultFromStates(d, solved.times, solved.states, [
+        { id: 'x', label: 'Activator X' },
+        { id: 'y', label: 'Intermediate Y' },
+      ]);
     }
     case 'oregonator': {
       const epsilon = p.epsilon ?? 0.08;
       const feedback = p.feedback ?? 1.2;
+      if (epsilon <= 0) throw new Error('Oregonator epsilon must be greater than zero.');
       const solved = rk4(
         [0.35, 0.9, 0.2],
         d,
         (_t, [x = 0, y = 0, z = 0]) => {
           const q = 0.02;
           return [
-            (q * y - x * y + x * (1 - x)) / Math.max(epsilon, 0.02),
+            (q * y - x * y + x * (1 - x)) / epsilon,
             -q * y - x * y + feedback * z,
             0.3 * (x - z),
           ];
         },
         1200,
       );
-      return resultFromStates(d, solved.times, solved.states, ['HBrO₂', 'Br⁻', 'Catalyst']);
+      return resultFromStates(d, solved.times, solved.states, [
+        { id: 'x', label: 'HBrO₂' },
+        { id: 'y', label: 'Br⁻' },
+        { id: 'z', label: 'Catalyst' },
+      ]);
     }
     case 'sir': {
       const beta = p.transmission ?? 0.34;
@@ -228,7 +383,11 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         d,
         solved.times,
         solved.states,
-        ['Susceptible', 'Infectious', 'Removed'],
+        [
+          { id: 'S', label: 'Susceptible' },
+          { id: 'I', label: 'Infectious' },
+          { id: 'R', label: 'Removed' },
+        ],
         [0, 1],
       );
     }
@@ -239,22 +398,22 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         v - v ** 3 / 3 - w + current,
         recovery * (v + 0.7 - 0.8 * w),
       ]);
-      return resultFromStates(d, solved.times, solved.states, ['Membrane potential', 'Recovery']);
+      return resultFromStates(d, solved.times, solved.states, [
+        { id: 'v', label: 'Membrane potential' },
+        { id: 'w', label: 'Recovery' },
+      ]);
     }
     case 'hodgkin-huxley': {
       const current = p.current ?? 10;
       const gNa = p.conductance ?? 120;
-      const safeRate = (numerator: number, denominator: number) =>
-        Math.abs(denominator) < 1e-7 ? 1 : numerator / denominator;
       const solved = rk4(
         [-65, 0.0529, 0.596, 0.317],
         d,
         (_t, [v = -65, m = 0, h = 0, n = 0]) => {
-          const am = safeRate(0.1 * (v + 40), 1 - Math.exp(-(v + 40) / 10));
+          const { alphaM: am, alphaN: an } = hodgkinHuxleyAlphaRates(v);
           const bm = 4 * Math.exp(-(v + 65) / 18);
           const ah = 0.07 * Math.exp(-(v + 65) / 20);
           const bh = 1 / (1 + Math.exp(-(v + 35) / 10));
-          const an = safeRate(0.01 * (v + 55), 1 - Math.exp(-(v + 55) / 10));
           const bn = 0.125 * Math.exp(-(v + 65) / 80);
           const dv =
             current - gNa * m ** 3 * h * (v - 50) - 36 * n ** 4 * (v + 77) - 0.3 * (v + 54.4);
@@ -263,10 +422,10 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
         1800,
       );
       return resultFromStates(d, solved.times, solved.states, [
-        'Voltage',
-        'Na activation',
-        'Na inactivation',
-        'K activation',
+        { id: 'V', label: 'Voltage' },
+        { id: 'm', label: 'Na activation' },
+        { id: 'h', label: 'Na inactivation' },
+        { id: 'n', label: 'K activation' },
       ]);
     }
     case 'lorenz': {
@@ -306,14 +465,28 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
       const luminosity = p.luminosity ?? 1;
       const death = p.death ?? 0.3;
       const solved = rk4([0.2, 0.2], d, (_t, [dark = 0, light = 0]) => {
-        const bare = Math.max(0, 1 - dark - light);
+        const bare = 1 - dark - light;
+        if (bare < 0) {
+          throw new Error('Daisyworld cover fractions left the declared population simplex.');
+        }
         const albedo = 0.5 - 0.25 * dark + 0.25 * light;
         const temp = 22 + 55 * (luminosity * (1 - albedo) - 0.5);
         const growthDark = Math.max(0, 1 - ((temp + 4 - 22.5) / 18) ** 2);
         const growthLight = Math.max(0, 1 - ((temp - 4 - 22.5) / 18) ** 2);
         return [dark * (bare * growthDark - death), light * (bare * growthLight - death)];
       });
-      return resultFromStates(d, solved.times, solved.states, ['Dark daisies', 'Light daisies']);
+      const stateAndTemperature = solved.states.map((state, stateIndex) => {
+        const dark = stateValue(state, 0, `Daisyworld state ${stateIndex}`);
+        const light = stateValue(state, 1, `Daisyworld state ${stateIndex}`);
+        const albedo = 0.5 - 0.25 * dark + 0.25 * light;
+        const temperature = 22 + 55 * (luminosity * (1 - albedo) - 0.5);
+        return [dark, light, temperature];
+      });
+      return resultFromStates(d, solved.times, stateAndTemperature, [
+        { id: 'dark-cover', label: 'Dark daisies' },
+        { id: 'light-cover', label: 'Light daisies' },
+        { id: 'temperature', label: 'Global temperature' },
+      ]);
     }
     case 'carbon-cycle': {
       const emission = p.emission ?? 1.8;
@@ -331,28 +504,70 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
     case 'restricted-three-body': {
       const mu = p.massRatio ?? 0.012;
       const velocity = p.velocity ?? 0.62;
+      const initial: [number, number, number, number] = [0.72, 0.05, 0, velocity];
+      assertCr3bpPosition(initial[0], initial[1], mu, 'initial condition');
       const solved = rk4(
-        [0.72, 0.05, 0, velocity],
+        initial,
         d,
-        (_t, [x = 0, y = 0, vx = 0, vy = 0]) => {
-          const r1 = Math.max(0.03, Math.hypot(x + mu, y));
-          const r2 = Math.max(0.03, Math.hypot(x - 1 + mu, y));
+        (_t, state) => {
+          const x = stateValue(state, 0, 'CR3BP x');
+          const y = stateValue(state, 1, 'CR3BP y');
+          const vx = stateValue(state, 2, 'CR3BP vx');
+          const vy = stateValue(state, 3, 'CR3BP vy');
+          const r1 = Math.hypot(x + mu, y);
+          const r2 = Math.hypot(x - 1 + mu, y);
+          assertCr3bpPosition(x, y, mu, 'at an RK4 stage');
           const ax = x + 2 * vy - ((1 - mu) * (x + mu)) / r1 ** 3 - (mu * (x - 1 + mu)) / r2 ** 3;
           const ay = y - 2 * vx - ((1 - mu) * y) / r1 ** 3 - (mu * y) / r2 ** 3;
           return [vx, vy, ax, ay];
         },
         1600,
+        (previous, next, step, nextTime) => {
+          const previousX = stateValue(previous, 0, 'CR3BP previous x');
+          const previousY = stateValue(previous, 1, 'CR3BP previous y');
+          const nextX = stateValue(next, 0, 'CR3BP next x');
+          const nextY = stateValue(next, 1, 'CR3BP next y');
+          for (const primaryX of [-mu, 1 - mu]) {
+            if (
+              distanceFromPointToSegment(previousX, previousY, nextX, nextY, primaryX, 0) <=
+              CR3BP_EXCLUSION_RADIUS
+            ) {
+              throw new Error(
+                `CR3BP close-encounter event crossed the declared ${CR3BP_EXCLUSION_RADIUS} exclusion radius between step ${step - 1} and step ${step} (t=${nextTime}).`,
+              );
+            }
+          }
+        },
       );
-      return resultFromStates(d, solved.times, solved.states, [
-        'Rotating x',
-        'Rotating y',
-        'Velocity x',
-        'Velocity y',
-      ]);
+      const states = solved.states.map((state) => {
+        const x = stateValue(state, 0, 'CR3BP x');
+        const y = stateValue(state, 1, 'CR3BP y');
+        const vx = stateValue(state, 2, 'CR3BP vx');
+        const vy = stateValue(state, 3, 'CR3BP vy');
+        const r1 = Math.hypot(x + mu, y);
+        const r2 = Math.hypot(x - 1 + mu, y);
+        const potential = 0.5 * (x * x + y * y) + (1 - mu) / r1 + mu / r2;
+        return [x, y, vx, vy, 2 * potential - vx * vx - vy * vy];
+      });
+      return resultFromStates(
+        d,
+        solved.times,
+        states,
+        [
+          { id: 'x', label: 'Rotating x' },
+          { id: 'y', label: 'Rotating y' },
+          { id: 'vx', label: 'Velocity x' },
+          { id: 'vy', label: 'Velocity y' },
+          { id: 'jacobi', label: 'Jacobi integral' },
+        ],
+        [0, 1],
+        `Fixed-step RK4 of the rotating-frame CR3BP; segments entering the declared ${CR3BP_EXCLUSION_RADIUS} close-encounter radius are invalid.`,
+      );
     }
     case 'n-body': {
       const thirdMass = p.mass ?? 0.6;
       const speed = p.velocity ?? 0.82;
+      const softening = 0.12;
       const masses = [1, 0.85, thirdMass];
       const initial = [-0.8, 0, 0.8, 0, 0, 0.9, 0, speed, 0, -speed, -speed * 0.7, 0];
       const solved = rk4(
@@ -363,104 +578,86 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
           for (let i = 0; i < 3; i += 1) {
             for (let j = 0; j < 3; j += 1) {
               if (i === j) continue;
-              const dx = (state[j * 2] ?? 0) - (state[i * 2] ?? 0);
-              const dy = (state[j * 2 + 1] ?? 0) - (state[i * 2 + 1] ?? 0);
-              const radius = Math.max(0.12, Math.hypot(dx, dy));
-              acceleration[i * 2] =
-                (acceleration[i * 2] ?? 0) + ((masses[j] ?? 0) * dx) / radius ** 3;
-              acceleration[i * 2 + 1] =
-                (acceleration[i * 2 + 1] ?? 0) + ((masses[j] ?? 0) * dy) / radius ** 3;
+              const dx =
+                stateValue(state, j * 2, 'N-body state') - stateValue(state, i * 2, 'N-body state');
+              const dy =
+                stateValue(state, j * 2 + 1, 'N-body state') -
+                stateValue(state, i * 2 + 1, 'N-body state');
+              const softenedRadiusCubed = (dx * dx + dy * dy + softening * softening) ** 1.5;
+              acceleration[i * 2] +=
+                (stateValue(masses, j, 'N-body masses') * dx) / softenedRadiusCubed;
+              acceleration[i * 2 + 1] +=
+                (stateValue(masses, j, 'N-body masses') * dy) / softenedRadiusCubed;
             }
           }
           return [...state.slice(6), ...acceleration];
         },
         1200,
       );
-      return resultFromStates(d, solved.times, solved.states, [
-        'Body A x',
-        'Body A y',
-        'Body B x',
-        'Body B y',
-        'Body C x',
-        'Body C y',
-      ]);
+      return resultFromStates(
+        d,
+        solved.times,
+        solved.states,
+        [
+          'Body A x',
+          'Body A y',
+          'Body B x',
+          'Body B y',
+          'Body C x',
+          'Body C y',
+          'Body A vx',
+          'Body A vy',
+          'Body B vx',
+          'Body B vy',
+          'Body C vx',
+          'Body C vy',
+        ],
+        [0, 1],
+        `Fixed-step RK4 of a planar three-body model with declared Plummer softening length ${softening}.`,
+      );
     }
     case 'friedmann': {
       const matter = p.matter ?? 0.3;
       const vacuum = p.vacuum ?? 0.7;
       const curvature = 1 - matter - vacuum;
+      const expansionRate = (a: number) => {
+        if (!(a > 0)) throw new Error('Friedmann scale factor reached a non-positive value.');
+        const radicand = matter / a + curvature + vacuum * a * a;
+        if (radicand <= 0) {
+          throw new Error(
+            'Friedmann expanding-branch turnaround event made the radicand non-positive.',
+          );
+        }
+        return Math.sqrt(radicand);
+      };
       const solved = rk4(
         [0.06],
         d,
-        (_t, [a = 0.06]) => [
-          Math.sqrt(Math.max(0.0001, matter / Math.max(a, 0.02) + curvature + vacuum * a * a)),
-        ],
+        (_t, state) => [expansionRate(stateValue(state, 0, 'Scale factor'))],
         900,
       );
-      const states = solved.states.map(([a = 0]) => [a, matter / Math.max(a, 0.02) ** 3, vacuum]);
+      const states = solved.states.map((state) => {
+        const a = stateValue(state, 0, 'Scale factor');
+        const aDot = expansionRate(a);
+        return [a, aDot / a, matter / a ** 3, vacuum];
+      });
       return resultFromStates(
         d,
         solved.times,
         states,
-        ['Scale factor', 'Matter density', 'Vacuum density'],
+        [
+          { id: 'scale-factor', label: 'Scale factor' },
+          { id: 'hubble-rate', label: 'Hubble rate' },
+          { id: 'matter-density', label: 'Matter density' },
+          { id: 'vacuum-density', label: 'Vacuum density' },
+        ],
         [0, 1],
+        'Fixed-step RK4 of the normalized Friedmann expanding branch; a non-positive radicand is an explicit turnaround event.',
       );
     }
     default:
       return null;
   }
-}
-
-function analyticWork(work: WorkManifest, p: Record<string, number>): WorkResult | null {
-  const samples = 720;
-  const times = Array.from({ length: samples + 1 }, (_, i) => (i / samples) * work.duration);
-  if (work.kernel === 'kepler') {
-    const e = p.eccentricity ?? 0.48;
-    const a = p.axis ?? 1;
-    const states = times.map((_time, i) => {
-      const theta = (i / samples) * Math.PI * 2;
-      const r = (a * (1 - e * e)) / (1 + e * Math.cos(theta));
-      return [r * Math.cos(theta), r * Math.sin(theta), r];
-    });
-    return resultFromStates(work.duration, times, states, ['Orbit x', 'Orbit y', 'Radius']);
-  }
-  if (work.kernel === 'hohmann') {
-    const target = p.target ?? 2.2;
-    const phase = p.phase ?? 0;
-    const states = times.map((_time, i) => {
-      const theta = (i / samples) * Math.PI * 2;
-      const transfer = i / samples < 0.5;
-      const r = transfer
-        ? (2 * target) / (1 + target + (target - 1) * Math.cos(theta * 2))
-        : target;
-      return [r * Math.cos(theta + phase), r * Math.sin(theta + phase), r];
-    });
-    return resultFromStates(work.duration, times, states, ['Transfer x', 'Transfer y', 'Radius']);
-  }
-  if (work.kernel === 'exoplanet-transit') {
-    const radius = p.radius ?? 0.1;
-    const impact = p.impact ?? 0.35;
-    const states = times.map((_time, i) => {
-      const phase = (i / samples) * 2 - 1;
-      const separation = Math.hypot(phase * 2.2, impact);
-      const overlap = Math.max(0, Math.min(1, (1 + radius - separation) / (2 * radius)));
-      const flux =
-        1 -
-        radius *
-          radius *
-          overlap *
-          (1 - 0.28 * Math.sqrt(Math.max(0, 1 - separation * separation)));
-      return [phase, flux, overlap];
-    });
-    return resultFromStates(
-      work.duration,
-      times,
-      states,
-      ['Orbital phase', 'Stellar flux', 'Overlap'],
-      [0, 1],
-    );
-  }
-  return null;
 }
 
 function discreteWork(work: WorkManifest, p: Record<string, number>): WorkResult | null {
@@ -469,20 +666,26 @@ function discreteWork(work: WorkManifest, p: Record<string, number>): WorkResult
     let x = p.initial ?? 0.21;
     const states: number[][] = [];
     const times: number[] = [];
-    for (let i = 0; i <= 800; i += 1) {
+    for (let iteration = 1; iteration <= 800; iteration += 1) {
       x = growth * x * (1 - x);
-      if (i > 80) {
-        states.push([i, x, growth]);
-        times.push(states.length - 1);
+      if (iteration > 80) {
+        states.push([x, iteration, growth]);
+        times.push(iteration);
       }
     }
-    return resultFromStates(
-      times.length - 1,
+    const result = resultFromStates(
+      800,
       times,
       states,
-      ['Iteration', 'Population', 'Growth'],
-      [0, 1],
+      [
+        { id: 'x', label: 'Population' },
+        { id: 'iteration', label: 'Iteration' },
+        { id: 'growth', label: 'Growth' },
+      ],
+      [1, 0],
     );
+    result.presentationDuration = work.duration;
+    return result;
   }
   if (work.kernel === 'standard-map') {
     const kick = p.kick ?? 1.1;
@@ -490,156 +693,240 @@ function discreteWork(work: WorkManifest, p: Record<string, number>): WorkResult
     let momentum = p.momentum ?? 0.4;
     const states: number[][] = [];
     const times: number[] = [];
-    for (let i = 0; i <= 850; i += 1) {
-      momentum = (momentum + kick * Math.sin(theta) + Math.PI * 4) % (Math.PI * 2);
-      theta = (theta + momentum) % (Math.PI * 2);
+    const period = Math.PI * 2;
+    const wrap = (value: number) => {
+      const remainder = value % period;
+      return remainder < 0 ? remainder + period : remainder;
+    };
+    for (let iteration = 0; iteration <= 850; iteration += 1) {
       states.push([theta, momentum]);
-      times.push(i);
+      times.push(iteration);
+      if (iteration === 850) break;
+      momentum = wrap(momentum + kick * Math.sin(theta));
+      theta = wrap(theta + momentum);
     }
-    return resultFromStates(850, times, states, ['Angle', 'Momentum']);
+    const result = resultFromStates(850, times, states, [
+      { id: 'theta', label: 'Angle' },
+      { id: 'momentum', label: 'Momentum' },
+    ]);
+    result.presentationDuration = work.duration;
+    return result;
   }
   return null;
 }
 
-function seeded(index: number) {
-  const value = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
-  return value - Math.floor(value);
+const kernelsByRuntime = {
+  'reaction-network-v1': ['reaction-chain'],
+  'ode-v1': [
+    'double-pendulum',
+    'kuramoto',
+    'fput',
+    'lotka-volterra',
+    'brusselator',
+    'oregonator',
+    'sir',
+    'hodgkin-huxley',
+    'fitzhugh-nagumo',
+    'lorenz',
+    'stommel',
+    'daisyworld',
+    'carbon-cycle',
+    'restricted-three-body',
+    'n-body',
+    'friedmann',
+  ],
+  'field-v1': [
+    'wave',
+    'heat',
+    'schrodinger',
+    'gray-scott',
+    'cahn-hilliard',
+    'shallow-water',
+    'budyko-sellers',
+  ],
+  'discrete-v1': ['logistic', 'standard-map', 'ising'],
+  'analytic-v1': ['kepler', 'hohmann', 'exoplanet-transit'],
+} as const satisfies Record<RuntimeKind, readonly string[]>;
+
+function registeredRuntimeFor(kernel: string): RuntimeKind | null {
+  for (const runtime of Object.keys(kernelsByRuntime) as RuntimeKind[]) {
+    if ((kernelsByRuntime[runtime] as readonly string[]).includes(kernel)) return runtime;
+  }
+  return null;
 }
 
-function fieldWork(work: WorkManifest, p: Record<string, number>): WorkResult | null {
-  const columns = 48;
-  const rows = 32;
-  const values: number[] = [];
-  const phase = 1.7;
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < columns; x += 1) {
-      const nx = (x / (columns - 1)) * 2 - 1;
-      const ny = (y / (rows - 1)) * 2 - 1;
-      let value: number;
-      switch (work.kernel) {
-        case 'wave': {
-          const speed = p.speed ?? 1;
-          const mode = p.mode ?? 2;
-          value =
-            Math.sin(Math.PI * mode * nx - phase * speed) * Math.cos(Math.PI * ny) * 0.5 + 0.5;
-          break;
-        }
-        case 'heat': {
-          const diffusivity = p.diffusivity ?? 0.25;
-          const sources = Math.round(p.sources ?? 2);
-          value = 0;
-          for (let source = 0; source < sources; source += 1) {
-            const sx = Math.cos(source * 2.4) * 0.45;
-            const sy = Math.sin(source * 1.7) * 0.45;
-            value += Math.exp(-((nx - sx) ** 2 + (ny - sy) ** 2) / (0.05 + diffusivity * 0.35));
-          }
-          value = Math.min(1, value / Math.max(1, sources * 0.55));
-          break;
-        }
-        case 'schrodinger': {
-          const momentum = p.momentum ?? 3.2;
-          const width = p.width ?? 0.65;
-          const envelope = Math.exp(
-            -((nx + 0.15) ** 2 + ny * ny * 1.8) / Math.max(0.03, width * width),
-          );
-          value = 0.5 + 0.5 * envelope * Math.cos(momentum * 6 * nx - phase);
-          break;
-        }
-        case 'gray-scott': {
-          const feed = p.feed ?? 0.0367;
-          const kill = p.kill ?? 0.0649;
-          const radial = Math.hypot(nx, ny);
-          value =
-            0.5 +
-            0.5 *
-              Math.sin(28 * radial - 9 * phase + 180 * feed) *
-              Math.cos(13 * nx * ny + 100 * kill);
-          value *= Math.exp(-0.18 * radial);
-          break;
-        }
-        case 'ising': {
-          const temperature = p.temperature ?? 2.27;
-          const field = p.field ?? 0;
-          const scale = Math.max(2, Math.round(2 + temperature * 1.5));
-          const cell = Math.floor(x / scale) + Math.floor(y / scale) * 31;
-          value = seeded(cell) + field * 0.22 > temperature / 5 ? 1 : 0;
-          break;
-        }
-        case 'cahn-hilliard': {
-          const mobility = p.mobility ?? 0.35;
-          const interfaceCost = p.interface ?? 0.7;
-          const texture =
-            Math.sin(9 * nx + 3 * Math.sin(7 * ny)) + Math.cos(8 * ny - 2 * Math.sin(6 * nx));
-          value =
-            0.5 +
-            0.5 *
-              Math.tanh(
-                (texture + (seeded(x + y * columns) - 0.5) * mobility * 3) /
-                  Math.max(0.2, interfaceCost),
-              );
-          break;
-        }
-        case 'shallow-water': {
-          const depth = p.depth ?? 1;
-          const rotation = p.rotation ?? 0.7;
-          value =
-            0.5 +
-            0.22 * Math.sin(9 * nx - phase * Math.sqrt(depth)) +
-            0.18 * Math.cos(7 * ny + rotation * nx * 4);
-          break;
-        }
-        case 'budyko-sellers': {
-          const solar = p.solar ?? 1;
-          const transport = p.transport ?? 0.35;
-          const latitude = Math.abs(ny);
-          const temperature =
-            1.25 * solar * (1 - 0.55 * latitude ** 2) - 0.52 + transport * (0.5 - latitude);
-          value = 1 / (1 + Math.exp(-10 * temperature));
-          break;
-        }
-        default:
-          return null;
-      }
-      values.push(Math.max(0, Math.min(1, finite(value, 0.5))));
+function dispatchWork(work: WorkManifest, parameters: Record<string, number>): WorkResult {
+  const registeredRuntime = registeredRuntimeFor(work.kernel);
+  if (registeredRuntime !== work.runtime) {
+    if (registeredRuntime) {
+      throw new Error(
+        `Kernel "${work.kernel}" is registered for runtime "${registeredRuntime}", not declared runtime "${work.runtime}".`,
+      );
+    }
+    throw new Error(
+      `No simulation kernel "${work.kernel}" is registered for runtime "${work.runtime}".`,
+    );
+  }
+
+  let result: WorkResult | null;
+  switch (work.runtime) {
+    case 'reaction-network-v1':
+    case 'ode-v1':
+      result =
+        simulateReviewedFoundation(work, parameters) ??
+        simulateReviewedCollective(work, parameters) ??
+        odeWork(work, parameters);
+      break;
+    case 'analytic-v1':
+      result = simulateReviewedAnalyticOrbit(work, parameters);
+      break;
+    case 'discrete-v1':
+      // Ising is a seeded Markov chain whose scientific clock is Monte Carlo sweeps.
+      // Its lattice view is a field payload, but it remains a discrete runtime.
+      result = simulateReviewedField(work, parameters) ?? discreteWork(work, parameters);
+      break;
+    case 'field-v1':
+      result =
+        simulateReviewedField(work, parameters) ?? simulateReviewedAnalyticField(work, parameters);
+      break;
+  }
+
+  if (!result) {
+    throw new Error(
+      `Kernel "${work.kernel}" did not produce a result for runtime "${work.runtime}".`,
+    );
+  }
+  return result;
+}
+
+function validateWorkResult(work: WorkManifest, result: WorkResult): void {
+  assertFiniteNumber(result.duration, `Work "${work.slug}" result duration`);
+  if (result.duration <= 0) {
+    throw new Error(`Work "${work.slug}" result duration must be positive.`);
+  }
+  if (result.presentationDuration !== undefined) {
+    assertFiniteNumber(result.presentationDuration, `Work "${work.slug}" presentation duration`);
+    if (result.presentationDuration <= 0) {
+      throw new Error(`Work "${work.slug}" presentation duration must be positive.`);
     }
   }
-  const rowMeans = Array.from({ length: rows }, (_, row) => {
-    const slice = values.slice(row * columns, (row + 1) * columns);
-    return slice.reduce((sum, value) => sum + value, 0) / columns;
+  if (result.times.length === 0) throw new Error(`Work "${work.slug}" returned no times.`);
+  result.times.forEach((time, index) => {
+    assertFiniteNumber(time, `Work "${work.slug}" time[${index}]`);
+    if (index > 0 && time <= result.times[index - 1]) {
+      throw new Error(`Work "${work.slug}" times are not strictly increasing at index ${index}.`);
+    }
   });
-  const times = rowMeans.map((_value, index) => (index / (rows - 1)) * work.duration);
-  const series: Series[] = [
-    {
-      id: 'field-intensity',
-      label: 'Field intensity',
-      color: palette[0] ?? '#fff',
-      values: rowMeans,
-    },
-    {
-      id: 'field-contrast',
-      label: 'Local contrast',
-      color: palette[1] ?? '#fff',
-      values: rowMeans.map((value, index) => Math.abs(value - (rowMeans[index - 1] ?? value))),
-    },
-  ];
-  const field: FieldFrame = { columns, rows, values };
-  return {
-    duration: work.duration,
-    times,
-    series,
-    points: rowMeans.map((value, index) => ({ x: index, y: value })),
-    field,
-    diagnostics: 'Deterministic spatial field sampled on a 48 × 32 grid',
-  };
+  if (result.series.length === 0) throw new Error(`Work "${work.slug}" returned no series.`);
+  result.series.forEach((series) => {
+    if (series.values.length !== result.times.length) {
+      throw new Error(
+        `Work "${work.slug}" series "${series.id}" has ${series.values.length} values for ${result.times.length} times.`,
+      );
+    }
+    assertFiniteVector(
+      series.values,
+      result.times.length,
+      `Work "${work.slug}" series "${series.id}"`,
+    );
+  });
+  if (result.points.length !== result.times.length) {
+    throw new Error(
+      `Work "${work.slug}" has ${result.points.length} points for ${result.times.length} times.`,
+    );
+  }
+  result.points.forEach((point, index) => {
+    assertFiniteNumber(point.x, `Work "${work.slug}" point[${index}].x`);
+    assertFiniteNumber(point.y, `Work "${work.slug}" point[${index}].y`);
+  });
+  if (result.field) {
+    const { columns, rows, values } = result.field;
+    if (!Number.isInteger(columns) || columns <= 0 || !Number.isInteger(rows) || rows <= 0) {
+      throw new Error(
+        `Work "${work.slug}" returned invalid field dimensions ${columns} x ${rows}.`,
+      );
+    }
+    if (values.length !== columns * rows) {
+      throw new Error(
+        `Work "${work.slug}" field has ${values.length} values; expected ${columns * rows}.`,
+      );
+    }
+    assertFiniteVector(values, columns * rows, `Work "${work.slug}" field`);
+    if (result.field.valueDomain) {
+      const [minimum, maximum] = result.field.valueDomain;
+      assertFiniteNumber(minimum, `Work "${work.slug}" field value-domain minimum`);
+      assertFiniteNumber(maximum, `Work "${work.slug}" field value-domain maximum`);
+      if (minimum >= maximum) {
+        throw new Error(`Work "${work.slug}" field value domain must increase.`);
+      }
+    }
+  }
+  const fieldFrames = result.numerical?.fieldFrames;
+  if (fieldFrames) {
+    if (fieldFrames.length !== result.times.length) {
+      throw new Error(
+        `Work "${work.slug}" has ${fieldFrames.length} field frames for ${result.times.length} times.`,
+      );
+    }
+    fieldFrames.forEach((frame, frameIndex) => {
+      assertFiniteNumber(frame.time, `Work "${work.slug}" field frame ${frameIndex} time`);
+      if (frame.time !== result.times[frameIndex]) {
+        throw new Error(`Work "${work.slug}" field frame ${frameIndex} time does not match times.`);
+      }
+      const [rows, columns] = frame.shape;
+      if (
+        !Number.isSafeInteger(rows) ||
+        rows <= 0 ||
+        !Number.isSafeInteger(columns) ||
+        columns <= 0
+      ) {
+        throw new Error(
+          `Work "${work.slug}" field frame ${frameIndex} has invalid shape ${rows} x ${columns}.`,
+        );
+      }
+      const expected = rows * columns;
+      if (Object.keys(frame.components).length === 0) {
+        throw new Error(`Work "${work.slug}" field frame ${frameIndex} has no components.`);
+      }
+      for (const [component, values] of Object.entries(frame.components)) {
+        assertFiniteVector(
+          values,
+          expected,
+          `Work "${work.slug}" field frame ${frameIndex} component "${component}"`,
+        );
+      }
+      const displayComponent = result.field?.componentId;
+      if (displayComponent && !frame.components[displayComponent]) {
+        throw new Error(
+          `Work "${work.slug}" field frame ${frameIndex} omits display component "${displayComponent}".`,
+        );
+      }
+    });
+  }
+  const rawState = result.numerical?.state;
+  if (rawState) {
+    const [frameCount, stateDimension] = rawState.shape;
+    if (
+      !Number.isSafeInteger(frameCount) ||
+      frameCount <= 0 ||
+      !Number.isSafeInteger(stateDimension) ||
+      stateDimension <= 0 ||
+      frameCount !== result.times.length ||
+      rawState.coordinateIds.length !== stateDimension
+    ) {
+      throw new Error(`Work "${work.slug}" raw state shape does not match times or coordinates.`);
+    }
+    assertFiniteVector(
+      rawState.values,
+      frameCount * stateDimension,
+      `Work "${work.slug}" raw state`,
+    );
+  }
 }
 
 export function simulateWork(work: WorkManifest, overrides: Record<string, number>): WorkResult {
   const parameters = parametersFor(work, overrides);
-  const result =
-    odeWork(work, parameters) ??
-    analyticWork(work, parameters) ??
-    discreteWork(work, parameters) ??
-    fieldWork(work, parameters);
-  if (!result) throw new Error(`No simulation kernel registered for ${work.kernel}.`);
+  const result = dispatchWork(work, parameters);
+  validateWorkResult(work, result);
   return result;
 }

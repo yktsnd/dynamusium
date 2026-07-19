@@ -1,11 +1,106 @@
 # Visual language
 
-The canonical number-to-pixel mappings live in
-`src/visualization/visual-scales.ts` and `src/design-system/motion.ts`; no
-component may invent its own scaling. This document explains what each visual
-attribute means, then the design-token identity underneath it.
+DynaMusium separates three responsibilities:
 
-## Semantics
+1. numerical kernels expose state and observables;
+2. reviewed `SemanticVisualLayer` records what each visual channel means;
+3. composition and rendering decide how those immutable layers inhabit the museum room.
+
+The museum-wide contract lives in `src/museum/portrait-types.ts` and
+`src/museum/portrait-validation.ts`. The specialized reaction-network scales remain in
+`src/visualization/visual-scales.ts` and `src/design-system/motion.ts`. Components may implement a
+reviewed grammar, but they may not invent a data transform, silently autoscale away an overflow,
+or use decorative motion as a scientific value.
+
+## Semantic visual layers
+
+A layer names a scientific object, the regimes in which it is valid, a mark, one or more channel
+bindings, an optional state-space projection, scientific-time behavior, and a reduced-motion
+alternative. A binding declares:
+
+- the exact `quantityRef` and unit;
+- channel and scale (`linear`, `sqrt`, `log`, `symlog`, `categorical`, or `cyclic`);
+- a reviewed finite domain and zero where relevant;
+- what happens outside the domain (`overflow-indicator`, `clip-with-indicator`, or cyclic wrap);
+- an optional uncertainty reference.
+
+Fixed domains make parameter and preset comparisons honest. Clipping is a visual operation only;
+the underlying value stays in Study and an overflow remains perceptible. A field raster reads the
+current computed frame and declared component domain. A path projection names its state
+coordinates and aspect convention; high-dimensional state is not automatically turned into 3D.
+
+`src/museum/semantic-visual.ts` is the shared numeric binding interpreter. It applies the declared
+linear, square-root, logarithmic, symmetric-log, or cyclic transform and reports whether the raw
+value lies outside the reviewed domain. Museum renderers use that result for mark geometry and an
+explicit overflow label / count; they do not substitute a per-frame autoscale. Categorical
+bindings are not passed through the numeric interpreter.
+
+An `event-frequency` channel is special because event order is stateful. Its binding must declare
+a positive `eventQuantum` and an `eventAccumulatorRef`. The kernel integrates the cumulative
+amount and returns that observable; the renderer uses it only to place deterministic event marks.
+It must not numerically integrate instantaneous rates in React. A work-specific quantum (the Fed
+portrait currently uses 0.25 amount units) is part of the reviewed mapping and is distinct from the
+legacy reaction instrument's shared `PARTICLE_QUANTUM` below.
+
+### Marks and appropriate channels
+
+The validator restricts channels by mark. Examples include:
+
+| Scientific object                    | Primary mark                         | Appropriate channel meaning                                  |
+| ------------------------------------ | ------------------------------------ | ------------------------------------------------------------ |
+| Orbit segment / recurrent trajectory | `path`                               | selected state coordinates -> position                       |
+| Oscillator phase and order parameter | `glyph`                              | phase -> cyclic position / orientation; coherence -> length  |
+| Quantity and directional flux        | `fill` + path / particles            | amount -> fill; flux -> width and integrated event frequency |
+| Modal energy                         | `fill` / region                      | energy fraction -> area or height                            |
+| Empirical measure                    | `region` / raster                    | finite occupancy -> luminance or area                        |
+| Spatial field                        | `field-raster` / `contour-line`      | component value -> declared diverging or sequential scale    |
+| Interface / coherent structure       | `contour-line` / region              | computed level set or support -> position                    |
+| Directional connection / Morse graph | path + glyph                         | connection evidence -> direction, never physical flux        |
+| DMD mode                             | glyph / field / path, when qualified | fitted amplitude / phase with holdout residual shown         |
+
+One artwork selects one primary scientific truth. Secondary layers must support that truth rather
+than display every state variable. Absence of a computed object creates absence or an explicitly
+qualified fallback; it never authorizes the renderer to guess.
+
+## Composition boundary
+
+`CompositionSpec` may choose approved layer order and focus, set bounded negative space, use no
+camera or a bounded slow pan / zoom, and reference non-semantic atmosphere. Typography, texture,
+light, spacing, captions, camera, and Exhibit dwell all belong here.
+
+Composition cannot:
+
+- change a quantity reference, scale, domain, zero, direction, projection, uncertainty convention,
+  scientific timestamp, or reduced-motion meaning;
+- turn a Morse-graph edge into flux, finite occupancy into an invariant measure, or a DMD fit into
+  a proved Koopman eigenfunction;
+- synthesize scientific particles, noise, defects, or uncertainty from decorative randomness;
+- replace a failed or unavailable scientific layer with atmosphere that looks data-bearing.
+
+This boundary is independent of authoring software. No external composition tool is required or
+privileged. Fable, if someone elects to use it, is only one optional source of composition metadata
+within these limits; changing semantic mappings requires a new scientific review and manifest
+version.
+
+## Observe, Study, and Exhibit
+
+- **Observe** shows the primary layer and at most a few necessary supports. The phenomenon, not UI,
+  is the dominant image.
+- **Study** exposes the equation, representation, projection, units, scale domain, provenance,
+  checks, maturity, limitations, source, and current numerical values.
+- **Exhibit** uses the same semantic layers and scientific samples. It may lengthen dwell, recede
+  chrome, or stage slow composition changes, but never change frequency, flux, decay, or event
+  order.
+
+Reduced motion is a semantic alternative, not just `animation-duration: 0`: a trajectory can use
+an accumulated path or small multiples; an ensemble can use density; a flux network keeps width,
+direction, and numeric values; a field keeps the selected computed frame. The visitor can still
+scrub scientific time.
+
+## Specialized quantity / flux semantics
+
+The following mappings are the preserved reaction-network grammar. They apply to works whose
+portrait declares amount and directional-flux objects; they are not imposed on unrelated models.
 
 ### Vessel fill height
 
@@ -70,9 +165,9 @@ processes render:
   chevrons, and particle stream, driven by `forward` and `reverse`
   independently.
 - **Net**: one signed lane. `netLanes()` in `Channel.tsx` picks the lane
-  orientation from the sign of `net` — the lane points `from -> to` when `net
-  > = 0`, and flips to `to -> from`otherwise — and its width/particles are
-driven by`|net|`.
+  orientation from the sign of `net` — the lane points `from -> to` when
+  `net >= 0`, and flips to `to -> from` otherwise — and its width / particles
+  are driven by `|net|`.
 
 Irreversible processes (`inflow`, `outflow`, or a `conversion` without
 `reverseParam`) always render as a single lane driven by `net`, since
@@ -138,13 +233,12 @@ motion — only the animated particle stream is removed.
 
 ### The "Abyss Observatory" environment
 
-The instrument sits inside a restrained cosmic/deep-ocean environment: an
-original horizon image, two orbital hairlines, isolated observation stars,
-and small coordinate/depth readouts. `App.tsx` groups this entire layer under
-`.ambient-scene` with `aria-hidden="true"`; it is atmosphere only and never
-represents model state, rate, quantity, selection, or validity. A dark mask
-keeps the network and traces on the validated deep-ink ground, while the
-existing categorical data palette remains unchanged.
+The collection sits inside a restrained cosmic/deep-ocean environment: an
+original horizon image, orbital hairlines, isolated observation stars, and
+small coordinate readouts. `MuseumApp.tsx` groups the page atmosphere under
+`.museum-ambient` with `aria-hidden="true"`; it never represents model state,
+rate, quantity, selection, uncertainty, maturity, or validity. A dark mask
+keeps scientific marks and traces on the deep-ink ground.
 
 The background image lives at `public/cosmic-abyss.png` so the Vite base-path
 configuration can serve it both locally and from GitHub Pages. Reduced-motion
@@ -153,18 +247,19 @@ the caption's live-signal dot.
 
 ### The "Quiet Instrument" identity
 
-The whole viewport is the field: `App.tsx` composes a top rail, a museum
-caption, the network stage, and an "instrument block" of trace strips + time
-axis + transport directly on the page background. There is no card surface
-anywhere in this main flow — no bordered panel around the network, no
-per-chart frame, no boxed readout row. Card/panel chrome (background fill,
-border, border-radius) is now reserved exclusively for the three overlay
-surfaces that sit on top of the field: the parameters drawer
-(`InspectorPanel`), the "how to read" legend overlay (`LegendCard`), and the
-invalid-state takeover (`InvalidStatePanel`, which replaces the network stage
-in place rather than floating over it). Structural separation inside the
-field is drawn with a single 1px hairline (`.strip-sep` between the two trace
-strips, `border-bottom` under the rail) rather than boxes.
+The whole viewport is the field. The current museum work screen composes a
+thin `work-header`, a caption in negative space, one dominant scientific
+artwork, synchronized trace strip, transport, presets, and a quiet parameter
+drawer. Study adds evidence beside that same work instead of replacing it
+with a dashboard. Exhibit recedes the same chrome. Structural separation is
+made with low-contrast hairlines and translucent surfaces, not a grid of
+competing cards.
+
+The preserved reaction-network instrument uses the same identity: a top rail,
+museum caption, unboxed network stage, trace strips, time axis, and transport.
+Its parameters, reading legend, and invalid-state takeover are the only
+strong panel surfaces. This continuity lets the internal scientific contract
+change without discarding the established screen design.
 
 ### Instrument columns (vessels and the basin)
 
@@ -246,8 +341,9 @@ DynaMusium ships one dark theme (`src/design-system/tokens.css`), by design,
 rather than a light theme and a dark theme. The rationale: one exceptionally
 polished, fully validated theme is worth more than two incomplete ones, and a
 dark ground (`--bg: #0b0e15`) makes translucent fills and small particles
-legible in a way a light background does not. A second theme is on the
-roadmap only if it can be brought to the same quality bar (see README).
+legible in a way a light background does not. A second theme is outside the
+current contract unless it can meet the same scientific and accessibility
+quality bar.
 
 ### Type roles
 

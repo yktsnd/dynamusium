@@ -1,4 +1,14 @@
-import type { GalleryId, WorkManifest, WorkParameter, WorkPreset } from './types.ts';
+import { createPortraitExtension } from './portrait-registry.ts';
+import { assertValidPortraitExtension } from './portrait-validation.ts';
+import { parseCommunityManifestCollection } from '../works/manifest-validator.ts';
+import type {
+  GalleryId,
+  WorkManifest,
+  WorkManifestV1,
+  WorkManifestV2,
+  WorkParameter,
+  WorkPreset,
+} from './types.ts';
 
 export const galleries: Array<{ id: GalleryId; label: string; description: string }> = [
   {
@@ -44,34 +54,46 @@ const presets = (a: Record<string, number>, b: Record<string, number>): WorkPres
   { id: 'threshold', label: 'Near threshold', values: b },
 ];
 
-type WorkSeed = Omit<WorkManifest, 'schemaVersion' | 'presets' | 'citations'> & {
+type WorkSeed = Omit<WorkManifestV1, 'schemaVersion' | 'presets' | 'citations'> & {
   quiet: Record<string, number>;
   threshold: Record<string, number>;
   citation: [string, string];
 };
 
-const defineWork = (seed: WorkSeed): WorkManifest => ({
-  schemaVersion: 1,
-  slug: seed.slug,
-  title: seed.title,
-  subtitle: seed.subtitle,
-  gallery: seed.gallery,
-  runtime: seed.runtime,
-  render: seed.render,
-  kernel: seed.kernel,
-  tier: seed.tier,
-  year: seed.year,
-  authors: seed.authors,
-  summary: seed.summary,
-  question: seed.question,
-  equation: seed.equation,
-  duration: seed.duration,
-  parameters: seed.parameters,
-  presets: presets(seed.quiet, seed.threshold),
-  citations: [{ label: seed.citation[0], url: seed.citation[1] }],
-});
+const defineWork = (seed: WorkSeed): WorkManifestV2 => {
+  const workPresets = presets(seed.quiet, seed.threshold);
+  const portrait = createPortraitExtension({
+    slug: seed.slug,
+    kernel: seed.kernel,
+    render: seed.render,
+    parameters: seed.parameters,
+    presets: workPresets,
+  });
+  assertValidPortraitExtension(portrait);
+  return {
+    schemaVersion: 2,
+    slug: seed.slug,
+    title: seed.title,
+    subtitle: seed.subtitle,
+    gallery: seed.gallery,
+    runtime: seed.runtime,
+    render: seed.render,
+    kernel: seed.kernel,
+    tier: seed.tier,
+    year: seed.year,
+    authors: seed.authors,
+    summary: seed.summary,
+    question: seed.question,
+    equation: seed.equation,
+    duration: seed.duration,
+    parameters: seed.parameters,
+    presets: workPresets,
+    citations: [{ label: seed.citation[0], url: seed.citation[1] }],
+    portrait,
+  };
+};
 
-const builtInWorks: WorkManifest[] = [
+const builtInWorks: WorkManifestV2[] = [
   defineWork({
     slug: 'double-pendulum',
     title: 'Double Pendulum',
@@ -217,7 +239,7 @@ const builtInWorks: WorkManifest[] = [
     summary:
       'A kicked rotor reveals invariant curves, resonant islands, and global chaos in one plane.',
     question: 'Where does regular motion survive after chaos arrives?',
-    equation: 'pₙ₊₁=pₙ+K sinθₙ; θₙ₊₁=θₙ+pₙ₊₁',
+    equation: 'pₙ₊₁=(pₙ+K sinθₙ) mod 2π; θₙ₊₁=(θₙ+pₙ₊₁) mod 2π',
     parameters: [
       parameter('kick', 'Kick strength', 'K', 0, 7, 0.01, 1.1),
       parameter('momentum', 'Initial momentum', 'p₀', 0, 6.28, 0.01, 0.4),
@@ -238,23 +260,20 @@ const builtInWorks: WorkManifest[] = [
     render: 'series',
     kernel: 'reaction-chain',
     tier: 'flagship',
-    year: '1913',
-    authors: ['Michaelis', 'Menten'],
+    year: '1864 / curated 2026',
+    authors: ['Cato Guldberg', 'Peter Waage', 'DynaMusium contributors'],
     duration: 60,
     summary:
       'A driven sequence of conversions makes lag, accumulation, and throughput visible at once.',
     question: 'How does a changing input echo through a chain of finite rates?',
-    equation: 'Ȧ=F−k₁A; Ḃ=k₁A−k₂B; Ċ=k₂B−k₃C',
+    equation: 'F(t)=F[0.78+0.22 sin(2πt/18)]; Ȧ=F(t)−kA; Ḃ=kA−0.72kB; Ċ=0.72kB−0.48kC; Ṙ=0.48kC',
     parameters: [
       parameter('feed', 'Feed rate', 'F', 0.1, 2.5, 0.01, 1.05),
       parameter('rate', 'Transfer rate', 'k', 0.05, 1.2, 0.01, 0.42),
     ],
     quiet: { feed: 0.35, rate: 0.2 },
     threshold: { feed: 1.8, rate: 0.75 },
-    citation: [
-      'Michaelis & Menten, Die Kinetik der Invertinwirkung',
-      'https://doi.org/10.1016/j.febslet.2013.07.015',
-    ],
+    citation: ['IUPAC Gold Book, mass action, law of', 'https://doi.org/10.1351/goldbook.08184'],
   }),
   defineWork({
     slug: 'gray-scott',
@@ -295,12 +314,12 @@ const builtInWorks: WorkManifest[] = [
     year: '1822',
     authors: ['Joseph Fourier'],
     duration: 16,
-    summary: 'A concentrated temperature field spreads irreversibly toward uniformity.',
+    summary: 'A smooth periodic temperature field spreads irreversibly toward uniformity.',
     question: 'Why does the future remember less spatial detail than the past?',
     equation: '∂u/∂t = α∇²u',
     parameters: [
       parameter('diffusivity', 'Diffusivity', 'α', 0.03, 1, 0.01, 0.25),
-      parameter('sources', 'Heat sources', 'n', 1, 5, 1, 2),
+      parameter('sources', 'Initial Fourier modes', 'n', 1, 5, 1, 2),
     ],
     quiet: { diffusivity: 0.08, sources: 1 },
     threshold: { diffusivity: 0.75, sources: 4 },
@@ -324,7 +343,7 @@ const builtInWorks: WorkManifest[] = [
     summary:
       'A localized quantum state travels, interferes, and disperses under unitary evolution.',
     question: 'What does motion mean when position is an amplitude distribution?',
-    equation: 'iℏ∂ψ/∂t = −ℏ²∇²ψ/2m + Vψ',
+    equation: 'iℏ∂ψ/∂t = −ℏ²∇²ψ/2m (free particle, V=0)',
     parameters: [
       parameter('momentum', 'Momentum', 'k₀', 0.5, 8, 0.1, 3.2),
       parameter('width', 'Packet width', 'σ', 0.2, 2, 0.02, 0.65),
@@ -402,7 +421,7 @@ const builtInWorks: WorkManifest[] = [
     duration: 36,
     summary: 'Predator and prey trace a closed exchange between abundance and scarcity.',
     question: 'How does each population become the other population’s delay?',
-    equation: 'ẋ=αx−βxy; ẏ=δxy−γy',
+    equation: 'ẋ=αx−βxy; ẏ=0.5xy−0.8y',
     parameters: [
       parameter('predation', 'Predation', 'β', 0.1, 2, 0.01, 0.7),
       parameter('recovery', 'Prey growth', 'α', 0.2, 2, 0.01, 1.1),
@@ -454,7 +473,7 @@ const builtInWorks: WorkManifest[] = [
     duration: 30,
     summary: 'A reduced Belousov–Zhabotinsky mechanism produces sharp chemical relaxation cycles.',
     question: 'Why do slow accumulation and fast release form a robust rhythm?',
-    equation: 'εẋ=qy−xy+x(1−x); ẏ=−qy−xy+fz',
+    equation: 'εẋ=0.02y−xy+x(1−x); ẏ=−0.02y−xy+fz; ż=0.3(x−z)',
     parameters: [
       parameter('epsilon', 'Fast scale', 'ε', 0.02, 0.3, 0.005, 0.08),
       parameter('feedback', 'Feedback', 'f', 0.5, 2.5, 0.02, 1.2),
@@ -589,7 +608,7 @@ const builtInWorks: WorkManifest[] = [
     summary:
       'Temperature and salinity feedbacks permit abrupt switches in overturning circulation.',
     question: 'How can the same forcing support two different oceans?',
-    equation: 'q = k(αΔT−βΔS)',
+    equation: 'q=k(T−S); Ṫ=1−T−|q|T; Ṡ=F−S−|q|S',
     parameters: [
       parameter('freshwater', 'Freshwater forcing', 'F', 0, 2, 0.01, 0.85),
       parameter('exchange', 'Exchange', 'k', 0.1, 2, 0.02, 0.7),
@@ -616,7 +635,7 @@ const builtInWorks: WorkManifest[] = [
     summary:
       'Dark and light daisies alter albedo, coupling ecological competition to planetary temperature.',
     question: 'Can selection create regulation without planning it?',
-    equation: 'ẋᵢ=xᵢ[β(Tᵢ)(1−Σx)−γ]',
+    equation: 'ẋᵢ=xᵢ[β₊(Tᵢ)(1−Σx)−γ], with β₊=max(0,β)',
     parameters: [
       parameter('luminosity', 'Solar luminosity', 'L', 0.6, 1.6, 0.01, 1),
       parameter('death', 'Mortality', 'γ', 0.1, 0.6, 0.01, 0.3),
@@ -640,9 +659,10 @@ const builtInWorks: WorkManifest[] = [
     year: '1957',
     authors: ['Roger Revelle', 'Hans Suess'],
     duration: 120,
-    summary: 'Atmosphere, biosphere, and ocean exchange carbon through fast and slow reservoirs.',
+    summary:
+      'A finite emission pulse is redistributed among atmosphere, ocean, and biosphere reservoirs.',
     question: 'Why does a pulse persist after its source stops?',
-    equation: 'Ċₐ=E−kₐₒCₐ+kₒₐCₒ−kₐᵇCₐ+kᵇₐCᵇ',
+    equation: 'Ċₐ=E(t)−kₐₒCₐ+kₒₐCₒ−kₐᵇCₐ+kᵇₐCᵇ; E(t)=E for t<0.22T, else 0',
     parameters: [
       parameter('emission', 'Emission pulse', 'E', 0, 5, 0.05, 1.8),
       parameter('ocean', 'Ocean uptake', 'kₐₒ', 0.01, 0.5, 0.01, 0.12),
@@ -667,9 +687,9 @@ const builtInWorks: WorkManifest[] = [
     authors: ['Pierre-Simon Laplace'],
     duration: 20,
     summary:
-      'Depth-averaged conservation laws carry gravity waves across a planetary-scale surface.',
+      'Linearized depth-averaged conservation laws carry rotating gravity waves across a periodic surface.',
     question: 'What structure survives when a three-dimensional ocean becomes a sheet?',
-    equation: '∂ₜ h+∇·(hu)=0; ∂ₜ u+u·∇u=−g∇h',
+    equation: '∂ₜη=−H∇·u; ∂ₜ u=−g∂ₓη+fv; ∂ₜ v=−g∂ᵧη−fu',
     parameters: [
       parameter('depth', 'Mean depth', 'H', 0.2, 2, 0.02, 1),
       parameter('rotation', 'Rotation', 'f', 0, 2, 0.02, 0.7),
@@ -795,7 +815,7 @@ const builtInWorks: WorkManifest[] = [
     summary:
       'Three gravitating masses exchange energy and momentum without a closed general solution.',
     question: 'What remains conserved while every orbit reshapes every other?',
-    equation: 'r̈ᵢ=GΣⱼ≠ᵢmⱼ(rⱼ−rᵢ)/|rⱼ−rᵢ|³',
+    equation: 'r̈ᵢ=GΣⱼ≠ᵢmⱼ(rⱼ−rᵢ)/(|rⱼ−rᵢ|²+ε²)³ᐟ²; ε=0.12',
     parameters: [
       parameter('mass', 'Third mass', 'm₃', 0.05, 2, 0.01, 0.6),
       parameter('velocity', 'Orbital speed', 'v', 0.2, 1.8, 0.01, 0.82),
@@ -847,9 +867,9 @@ const builtInWorks: WorkManifest[] = [
     authors: ['David Charbonneau', 'Timothy Brown'],
     duration: 16,
     summary:
-      'A planet crossing its star produces a periodic, geometry-dependent dip in observed brightness.',
+      'A planet crossing its star produces a symmetric, geometry-dependent dip in observed brightness.',
     question: 'How much can a shadow reveal about a world that cannot be resolved?',
-    equation: 'ΔF/F ≈ (Rₚ/R⋆)²',
+    equation: 'F=1−A_overlap/(πR⋆²) for two uniform projected disks',
     parameters: [
       parameter('radius', 'Radius ratio', 'Rₚ/R⋆', 0.02, 0.25, 0.002, 0.1),
       parameter('impact', 'Impact parameter', 'b', 0, 1.2, 0.01, 0.35),
@@ -863,18 +883,40 @@ const builtInWorks: WorkManifest[] = [
   }),
 ];
 
-const communityModules = import.meta.glob('../works/community/*.json', {
+const communityModules = import.meta.glob<unknown>('../works/community/*.json', {
   eager: true,
   import: 'default',
-}) as Record<string, WorkManifest>;
+});
 
-export const works: WorkManifest[] = [...builtInWorks, ...Object.values(communityModules)];
+const communityWorks: WorkManifestV2[] = parseCommunityManifestCollection(
+  Object.entries(communityModules).map(([source, manifest]) => ({ source, manifest })),
+).map((work) => {
+  if (work.schemaVersion === 2) {
+    assertValidPortraitExtension(work.portrait);
+    return work;
+  }
+  const portrait = createPortraitExtension({
+    slug: work.slug,
+    kernel: work.kernel,
+    render: work.render,
+    parameters: work.parameters,
+    presets: work.presets,
+  });
+  assertValidPortraitExtension(portrait);
+  return { ...work, schemaVersion: 2, portrait };
+});
+
+export const works: WorkManifest[] = [...builtInWorks, ...communityWorks];
 
 const minimumCount = 30;
 if (builtInWorks.length !== minimumCount || works.length < minimumCount) {
   throw new Error(
     `DynaMusium catalog must contain at least ${minimumCount} works; found ${works.length}.`,
   );
+}
+
+if (new Set(works.map((work) => work.slug)).size !== works.length) {
+  throw new Error('DynaMusium catalog contains a duplicate work slug.');
 }
 
 export const workBySlug = new Map(works.map((work) => [work.slug, work]));

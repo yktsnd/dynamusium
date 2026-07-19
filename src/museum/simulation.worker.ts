@@ -1,5 +1,5 @@
-import { simulateWork } from './simulation.ts';
-import type { WorkManifest, WorkResult } from './types.ts';
+import { executeWork, type WorkExecution } from './execute-work.ts';
+import type { WorkManifest } from './types.ts';
 
 interface SimulationRequest {
   id: number;
@@ -9,20 +9,14 @@ interface SimulationRequest {
 
 interface SimulationResponse {
   id: number;
-  result?: WorkResult;
-  error?: string;
+  execution: WorkExecution;
 }
 
 self.onmessage = (event: MessageEvent<SimulationRequest>) => {
   const { id, work, values } = event.data;
-  try {
-    const response: SimulationResponse = { id, result: simulateWork(work, values) };
-    self.postMessage(response);
-  } catch (error) {
-    const response: SimulationResponse = {
-      id,
-      error: error instanceof Error ? error.message : 'Unknown simulation failure',
-    };
-    self.postMessage(response);
-  }
+  const response: SimulationResponse = {
+    id,
+    execution: executeWork(work, values, String(id)),
+  };
+  self.postMessage(response);
 };
