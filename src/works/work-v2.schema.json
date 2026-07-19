@@ -1,0 +1,596 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yktsnd.github.io/dynamusium/schemas/work-v2.schema.json",
+  "$comment": "Strict community contribution contract for a scientific Dynamical Portrait. Rendering geometry and equations are intentionally absent from semantic visual layers and composition.",
+  "title": "DynaMusium Work Manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "slug",
+    "title",
+    "subtitle",
+    "gallery",
+    "runtime",
+    "render",
+    "kernel",
+    "tier",
+    "year",
+    "authors",
+    "summary",
+    "question",
+    "equation",
+    "duration",
+    "parameters",
+    "presets",
+    "citations",
+    "portrait"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "slug": { "$ref": "work.schema.json#/properties/slug" },
+    "title": { "$ref": "work.schema.json#/properties/title" },
+    "subtitle": { "$ref": "work.schema.json#/properties/subtitle" },
+    "gallery": { "$ref": "work.schema.json#/properties/gallery" },
+    "runtime": { "$ref": "work.schema.json#/properties/runtime" },
+    "render": { "$ref": "work.schema.json#/properties/render" },
+    "kernel": { "$ref": "work.schema.json#/properties/kernel" },
+    "tier": { "$ref": "work.schema.json#/properties/tier" },
+    "year": { "$ref": "work.schema.json#/properties/year" },
+    "authors": { "$ref": "work.schema.json#/properties/authors" },
+    "summary": { "$ref": "work.schema.json#/properties/summary" },
+    "question": { "$ref": "work.schema.json#/properties/question" },
+    "equation": { "$ref": "work.schema.json#/properties/equation" },
+    "duration": { "$ref": "work.schema.json#/properties/duration" },
+    "parameters": { "$ref": "work.schema.json#/properties/parameters" },
+    "presets": { "$ref": "work.schema.json#/properties/presets" },
+    "citations": { "$ref": "work.schema.json#/properties/citations" },
+    "portrait": { "$ref": "#/$defs/portrait" }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9._-]*$"
+    },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "contentHash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": { "const": "sha256" },
+        "value": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "coordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "unit"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "$ref": "#/$defs/nonEmptyString" },
+        "unit": { "type": "string" }
+      }
+    },
+    "stateSpace": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "dimension", "coordinates"],
+          "properties": {
+            "kind": { "const": "euclidean" },
+            "dimension": { "type": "integer", "minimum": 1 },
+            "coordinates": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/coordinate" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "domainDimension", "components", "boundary"],
+          "properties": {
+            "kind": { "const": "field" },
+            "domainDimension": { "enum": [1, 2] },
+            "components": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/coordinate" }
+            },
+            "boundary": { "enum": ["periodic", "no-flux", "fixed", "open"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "factors", "dimension", "coordinates"],
+          "properties": {
+            "kind": { "const": "product" },
+            "factors": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "enum": ["circle", "euclidean"] }
+            },
+            "dimension": { "type": "integer", "minimum": 1 },
+            "coordinates": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/coordinate" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "siteCount", "values", "coordinates"],
+          "properties": {
+            "kind": { "const": "finite-configurations" },
+            "siteCount": { "type": "integer", "minimum": 1 },
+            "values": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "number" }
+            },
+            "coordinates": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/coordinate" }
+            }
+          }
+        }
+      ]
+    },
+    "continuousTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "unit"],
+      "properties": {
+        "kind": { "const": "continuous" },
+        "unit": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "discreteTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "stepUnit"],
+      "properties": {
+        "kind": { "const": "discrete" },
+        "stepUnit": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "evolution": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "time", "autonomous", "lawRef"],
+          "properties": {
+            "kind": { "enum": ["flow", "semiflow", "process"] },
+            "time": { "$ref": "#/$defs/continuousTime" },
+            "autonomous": { "type": "boolean" },
+            "lawRef": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "time", "lawRef"],
+          "properties": {
+            "kind": { "const": "map" },
+            "time": { "$ref": "#/$defs/discreteTime" },
+            "lawRef": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "time", "transitionLawRef"],
+          "properties": {
+            "kind": { "const": "markov-chain" },
+            "time": { "$ref": "#/$defs/discreteTime" },
+            "transitionLawRef": { "$ref": "#/$defs/nonEmptyString" },
+            "invariantLawRef": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      ]
+    },
+    "formal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["character", "stateSpace", "evolution"],
+      "properties": {
+        "character": {
+          "enum": ["deterministic", "stochastic", "hybrid", "stochastic-hybrid"]
+        },
+        "stateSpace": { "$ref": "#/$defs/stateSpace" },
+        "evolution": { "$ref": "#/$defs/evolution" }
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definitionRef", "expectedHash", "explanation"],
+      "properties": {
+        "definitionRef": { "$ref": "#/$defs/nonEmptyString" },
+        "expectedHash": { "$ref": "#/$defs/contentHash" },
+        "explanation": { "type": "string", "minLength": 5 }
+      }
+    },
+    "parameterRegime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "presetIds", "parameterDomain", "note"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "presetIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "parameterDomain": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [{ "type": "number" }, { "type": "number" }],
+            "items": false
+          }
+        },
+        "note": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "primaryClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "appliesToRegimeIds",
+        "statement",
+        "objectKind",
+        "observableIds",
+        "limitations",
+        "targetMaturity"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "appliesToRegimeIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "statement": { "type": "string", "minLength": 20 },
+        "objectKind": {
+          "enum": [
+            "orbit-segment",
+            "fixed-point",
+            "periodic-orbit",
+            "quasiperiodic-set",
+            "chaotic-attractor-candidate",
+            "transient-segment",
+            "recurrent-set",
+            "attractor",
+            "repeller",
+            "morse-set",
+            "morse-graph",
+            "invariant-manifold",
+            "basin",
+            "separatrix",
+            "empirical-measure",
+            "invariant-measure",
+            "recurrence",
+            "entropy",
+            "mixing",
+            "koopman-mode",
+            "dmd-mode",
+            "frequency",
+            "decay-rate",
+            "bifurcation",
+            "uncertainty",
+            "ensemble",
+            "conservation",
+            "flux",
+            "spatial-field",
+            "interface",
+            "defect",
+            "coherent-structure"
+          ]
+        },
+        "observableIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "targetMaturity": { "enum": ["M0", "M1", "M2", "M3", "M4"] }
+      }
+    },
+    "science": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["representation", "capabilities", "validations", "reviewedMaturity"],
+      "properties": {
+        "representation": {
+          "enum": [
+            "governing-law-execution",
+            "closed-form-solution",
+            "reduced-model",
+            "data-derived",
+            "illustrative-surrogate"
+          ]
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "local-stability",
+              "recurrence",
+              "empirical-measure",
+              "conservation",
+              "flux",
+              "frequency",
+              "decay-rate",
+              "spectral-mode",
+              "spatial-field",
+              "interface",
+              "persistent-homology",
+              "coherent-structure",
+              "ensemble",
+              "uncertainty",
+              "bifurcation"
+            ]
+          }
+        },
+        "validations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "finite-output",
+              "deterministic-replay",
+              "dimension-consistency",
+              "parameter-bounds",
+              "step-halving",
+              "grid-refinement",
+              "positivity",
+              "mass-balance",
+              "energy-residual",
+              "equilibrium-residual",
+              "order-parameter-bounds",
+              "reference-statistic",
+              "seeded-replay",
+              "cfl-condition",
+              "boundary-residual"
+            ]
+          }
+        },
+        "reviewedMaturity": { "enum": ["M0", "M1", "M2", "M3", "M4"] }
+      }
+    },
+    "runtimeSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "kernel",
+        "definitionRef",
+        "definitionHash",
+        "executionProfile",
+        "output"
+      ],
+      "properties": {
+        "kind": {
+          "enum": ["ode", "map", "field", "stochastic", "hybrid", "analytic", "surrogate"]
+        },
+        "kernel": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "definitionRef": { "$ref": "#/$defs/nonEmptyString" },
+        "definitionHash": { "$ref": "#/$defs/contentHash" },
+        "executionProfile": { "$ref": "#/$defs/nonEmptyString" },
+        "output": { "enum": ["trajectory", "field-trajectory", "ensemble"] }
+      }
+    },
+    "numericDomain": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false
+    },
+    "categoricalDomain": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantityRef", "channel", "scale", "domain", "outOfDomain"],
+      "properties": {
+        "quantityRef": { "$ref": "#/$defs/nonEmptyString" },
+        "channel": {
+          "enum": [
+            "position-x",
+            "position-y",
+            "luminance",
+            "hue",
+            "opacity",
+            "stroke-width",
+            "area",
+            "orientation",
+            "direction",
+            "event-frequency",
+            "phase"
+          ]
+        },
+        "scale": { "enum": ["linear", "sqrt", "log", "symlog", "categorical", "cyclic"] },
+        "domain": {
+          "oneOf": [{ "$ref": "#/$defs/numericDomain" }, { "$ref": "#/$defs/categoricalDomain" }]
+        },
+        "unit": { "type": "string" },
+        "zero": { "type": "number" },
+        "eventQuantum": { "type": "number", "exclusiveMinimum": 0 },
+        "eventAccumulatorRef": { "$ref": "#/$defs/nonEmptyString" },
+        "outOfDomain": { "enum": ["overflow-indicator", "clip-with-indicator", "wrap-cyclic"] },
+        "uncertaintyRef": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coordinateRefs", "method", "aspect"],
+      "properties": {
+        "coordinateRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "method": { "enum": ["identity", "selected-coordinates", "pca", "mode"] },
+        "aspect": { "enum": ["physical", "equal-data-units", "declared-distortion"] }
+      }
+    },
+    "scientificTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantityRef", "mode", "interpolation"],
+      "properties": {
+        "quantityRef": { "$ref": "#/$defs/nonEmptyString" },
+        "mode": { "enum": ["frame", "cursor", "phase"] },
+        "interpolation": { "enum": ["none", "linear", "declared-method"] }
+      }
+    },
+    "reducedMotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "preserves"],
+      "properties": {
+        "strategy": {
+          "enum": ["semantic-static", "accumulated-density", "keyframes", "small-multiples"]
+        },
+        "dataRef": { "$ref": "#/$defs/nonEmptyString" },
+        "preserves": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        }
+      }
+    },
+    "visualLayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "objectId", "appliesToRegimeIds", "mark", "bindings", "reducedMotion"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "objectId": { "$ref": "#/$defs/nonEmptyString" },
+        "appliesToRegimeIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "mark": {
+          "enum": [
+            "point",
+            "path",
+            "region",
+            "field-raster",
+            "contour-line",
+            "glyph",
+            "particle",
+            "fill"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/binding" }
+        },
+        "projection": { "$ref": "#/$defs/projection" },
+        "scientificTime": { "$ref": "#/$defs/scientificTime" },
+        "reducedMotion": { "$ref": "#/$defs/reducedMotion" }
+      }
+    },
+    "atmosphere": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetRef", "nonSemantic", "ariaHidden"],
+      "properties": {
+        "assetRef": { "$ref": "#/$defs/nonEmptyString" },
+        "decorativeSeed": { "$ref": "#/$defs/nonEmptyString" },
+        "nonSemantic": { "const": true },
+        "ariaHidden": { "const": true }
+      }
+    },
+    "composition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layerIds", "focalLayerId", "negativeSpace", "camera", "atmosphere"],
+      "properties": {
+        "layerIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "focalLayerId": { "$ref": "#/$defs/identifier" },
+        "negativeSpace": { "type": "number", "minimum": 0, "maximum": 0.8 },
+        "camera": { "enum": ["none", "bounded-slow-pan", "bounded-slow-zoom"] },
+        "atmosphere": { "$ref": "#/$defs/atmosphere" }
+      }
+    },
+    "portrait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formal",
+        "definition",
+        "parameterRegimes",
+        "primaryClaims",
+        "science",
+        "runtime",
+        "visualMappings",
+        "composition"
+      ],
+      "properties": {
+        "formal": { "$ref": "#/$defs/formal" },
+        "definition": { "$ref": "#/$defs/definition" },
+        "parameterRegimes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/parameterRegime" }
+        },
+        "primaryClaims": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/primaryClaim" }
+        },
+        "science": { "$ref": "#/$defs/science" },
+        "runtime": { "$ref": "#/$defs/runtimeSpec" },
+        "visualMappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/visualLayer" }
+        },
+        "composition": { "$ref": "#/$defs/composition" }
+      }
+    }
+  }
+}

@@ -1,6 +1,69 @@
 # Accessibility
 
-## Keyboard operability
+Accessibility is part of the scientific contract: a visitor must be able to identify the work,
+operate its reviewed controls, inspect numerical evidence, and recognize failure without relying
+on color, motion, or pointer hover.
+
+## Current museum shell
+
+### Keyboard and control semantics
+
+Entrance links, gallery filters, work cards, viewing modes, presets, playback, and reset actions
+are native `<button>` elements. Gallery, mode, and preset groups carry explicit group labels;
+selected states use `aria-pressed`. The timeline and every model parameter use native range inputs
+with labels, so arrow keys, Page Up / Down, Home, and End work without custom keyboard behavior.
+
+Observe, Study, and Exhibit switch presentation of one current run rather than creating separate
+scientific states. Study includes a real HTML table of sampled observables and marks the current
+row with `aria-current`.
+
+### Artwork alternatives
+
+Scientific SVG artworks use `role="img"` and a work-specific accessible name. The spatial-field
+canvas has an accessible component description; its synchronized numerical observables and
+evidence remain available in Study. Semantic-layer failure is a `role="alert"` rather than an
+empty or decorative substitute.
+
+The ambient museum layer is `aria-hidden="true"`. It carries no state, validity, direction,
+uncertainty, or scientific value, so hiding it loses no information.
+
+### Invalid and loading results
+
+Starting a new calculation removes the previous display and marks the work view `aria-busy` while
+loading. An invalid run is announced through a live `role="alert"`, explains that the current
+parameters did not produce a valid result, and offers a native button to restore the canonical
+preset. Playback and charts are not left attached to a stale trajectory.
+
+Study reports hard and claim-level checks with text (`passed`, `failed`, or `not-run`), execution
+provenance, maturity, and limitations. Status never depends on green / red styling alone.
+
+### Reduced motion
+
+The museum shell reads the shared `useReducedMotion` preference. When active, automatic playback
+stops and the play control explicitly reads “Static view”; the scientific timeline remains
+scrubbable. Quantity / flux particles are removed while numeric flux, width, and direction arrow
+remain. Phase, modal-energy, trajectory, and field artworks keep their reviewed static state. The
+same numerical payload and semantic mappings remain available in Study.
+
+### Redundant scientific encodings
+
+| Meaning              | Visual carrier                        | Non-color / non-motion carrier                                    |
+| -------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| Quantity             | Luminous fill                         | Vessel label and numeric amount                                   |
+| Directional flux     | Width, arrow, optional particles      | Direction arrow, width, and numeric flux                          |
+| Oscillator coherence | Order-vector geometry and center area | `R` numeric label and oscillator indices                          |
+| Modal energy         | Column height / area                  | Mode label, numeric energy, Hamiltonian residual                  |
+| Field value          | Sequential or diverging raster        | Component identity, declared domain, traces, and Study values     |
+| Validation status    | Optional status styling               | Status word, metric, tolerance, message, maturity, and limit text |
+| Scale overflow       | Edge / overflow treatment             | “OUTSIDE SCALE” or coordinate count text                          |
+
+## Preserved reaction-network module
+
+The specialized reaction-network instrument remains in the repository with its own controls,
+charts, overlays, and accessibility tests. The following details document that module and its
+quantity / directional-flux grammar.
+
+### Keyboard operability
 
 Every interactive control is a native element or carries the ARIA/keyboard
 behavior needed to act like one:
@@ -20,14 +83,14 @@ behavior needed to act like one:
   (`e.preventDefault()` + the same handler the `onClick` uses), matching
   native button behavior for selection.
 
-## Visible focus states
+### Visible focus states
 
 `--focus-ring` (`src/design-system/tokens.css`) — a two-layer ring (`0 0 0
 2px var(--bg), 0 0 0 4px rgba(234, 238, 246, 0.85)`) — provides visible focus
 that also has enough contrast against the dark background to double as a
 tritanopia/low-vision-safe outline, not just a color shift.
 
-## Labels and units
+### Labels and units
 
 Every numeric control states its unit alongside its label: inspector rows
 render `{label} ({unit})` (`InspectorPanel`'s `NumericRow`), and every
@@ -37,7 +100,7 @@ render `{label} ({unit})` (`InspectorPanel`'s `NumericRow`), and every
 second"` (`Channel`), and the basin's is `"{reservoir.label}: {amount} {unit}
 collected"` (`ReservoirBasin`).
 
-## `aria-live` status announcer
+### `aria-live` status announcer
 
 `StatusAnnouncer` (`src/components/controls/StatusAnnouncer.tsx`) is a
 visually hidden `aria-live="polite"` region that describes play/pause state
@@ -49,10 +112,10 @@ When the simulation is invalid, it announces the failure message instead
 (`"Simulation invalid: {error.message} Playback is stopped. Use reset to
 restore the preset."`) rather than a quantity summary.
 
-## Invalid simulation state
+### Invalid simulation state
 
 When `integrate()` returns an invalid `SimulationResult` (see
-[architecture.md](./architecture.md#invalid-results)), the network view is
+[architecture.md](./architecture.md#execution-and-run-identity)), the network view is
 replaced by `InvalidStatePanel` (`src/components/controls/InvalidStatePanel.tsx`),
 a `role="alert"` region — so assistive technology announces the failure the
 moment it appears, without waiting on the throttled `aria-live="polite"`
@@ -64,7 +127,7 @@ steps completed) in a `<dl>`, and provides the only way back: a single native
 button is keyboard- and screen-reader-operable the same way every other
 control in the app is (see "Keyboard operability" above).
 
-## Overlay focus management
+### Overlay focus management
 
 The parameters drawer (`InspectorPanel`) and the "how to read" legend
 overlay (`LegendCard`) are the only two card/panel surfaces in the app (see
@@ -90,10 +153,10 @@ in. The legend is closed by default (`legendOpen` starts `false` in
 clicking the scrim behind the legend card also closes it, in addition to the
 close button and `Escape`.
 
-## Exhibition mode
+### Exhibition mode
 
 Exhibition (kiosk) mode's UI recession (see
-[architecture.md](./architecture.md#exhibition-kiosk-mode)) fades the rail,
+[architecture.md](./architecture.md#rendering-and-accessibility)) fades the rail,
 transport, and time axis to `opacity: 0` with `pointer-events: none` after a
 period of no pointer, keyboard, or focus activity
 (`exhibition.css`, `.app-root.is-exhibit.is-recessed .rail` etc.). This is a
@@ -116,7 +179,7 @@ elsewhere), the two 400 ms opacity fades between scenes are skipped —
 finished frame and the 4-second caption interstitial keep their normal
 timing either way, since neither of those is an animation.
 
-## Reduced motion
+### Reduced motion
 
 Two layers, combined in `useReducedMotion` (`src/lib/accessibility/useReducedMotion.ts`):
 
@@ -132,7 +195,7 @@ When reduced motion is active, `NetworkView` skips rendering
 `ParticleLayer` entirely; nothing else about the view degrades (see next
 section).
 
-## No meaning by color or animation alone
+### No meaning by color or animation alone
 
 Every encoding that uses color or motion has at least one redundant,
 non-color, non-motion carrier:
@@ -150,7 +213,7 @@ Turning off motion (reduced-motion mode) or being unable to distinguish the
 palette's hues never removes access to a value — only the animated particle
 stream disappears; widths, chevrons, dashes, and numeric labels all remain.
 
-## Charts without hovering
+### Charts without hovering
 
 Each `TimeSeriesChart` (quantity and rate charts) renders a right-edge live
 readout column (`data-testid="readout-quantities"` / `"readout-rates"`) with
@@ -163,16 +226,15 @@ without ever hovering or dragging.
 
 ## How to report an issue
 
-File it per [CONTRIBUTING.md](../CONTRIBUTING.md#reporting-an-accessibility-issue):
-use the bug report template, note the assistive technology and browser you
-tested with, and label the issue `a11y`.
+Open an issue using the repository guidance in [CONTRIBUTING.md](../CONTRIBUTING.md). Use the bug
+report template, note the assistive technology and browser tested, and apply the `a11y` label.
 
 ## Current gaps
 
-- There is no full screen-reader-accessible data table alternative for chart
-  series yet — the readout row surfaces only the value at the current/hover
-  time, not the whole series.
-- The SVG network is exposed to assistive technology via `aria-label`s on
-  individual vessels, channels, and the basin (plus the `StatusAnnouncer`
-  summary), not via a structured data-table equivalent of the whole system
-  state.
+- The field canvas is described and paired with Study observables, but it does not expose every
+  grid cell as an assistive-technology table. A useful summary or downloadable table should be
+  designed before adding thousands of inaccessible cell nodes.
+- Scientific SVGs have concise image labels; their individual marks are not all independently
+  focusable. Study is the structured text / table alternative.
+- The preserved reaction-network SVG exposes vessels, channels, and the basin individually, but
+  still lacks a full-series data-table equivalent.

@@ -73,7 +73,9 @@ test('primary touch targets meet the minimum target size', async ({ page }) => {
     page.locator('.study-panel a').first(),
   ]) {
     await locator.scrollIntoViewIfNeeded();
+    await expect(locator).toBeVisible();
     const box = await locator.boundingBox();
+    expect(box).not.toBeNull();
     expect(box?.height).toBeGreaterThanOrEqual(24);
   }
 });

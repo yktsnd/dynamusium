@@ -1,6 +1,10 @@
 # ADR 0005: Museum runtime and solver scope
 
-**Status:** accepted
+**Status:** superseded by [ADR 0006](./0006-dynamical-portrait-runtime.md)
+
+This document is retained as the decision for the first museum-array runtime. Its single
+`WorkResult` normalization, fixed-RK4 scope, and last-valid-result behavior no longer describe the
+current Dynamical Portrait execution boundary.
 
 ## Context
 

@@ -1,5 +1,11 @@
 # ADR 0004: Numerical safety via a typed result union
 
+**Status:** accepted
+
+**Scope:** concrete tolerances and `SimulationResult` details apply to the preserved specialized
+reaction-network solver. ADR 0006 adopts the same no-silent-failure principle through the
+museum-wide `WorkRunResult`, without imposing these reaction-specific corrections on every model.
+
 ## Context
 
 The fixed-step RK4 solver (`src/solver/integrate.ts`) has no adaptive
@@ -48,7 +54,7 @@ it's `null`, so an invalid result cannot be played, scrubbed, or advanced
 through. `App` (`src/app/App.tsx`) renders `InvalidStatePanel` (`role="alert"`,
 the error and diagnostics, a "Reset preset defaults" button) instead of the
 network, hides `TransportBar`, and replaces both charts with "unavailable"
-placeholders — see [architecture.md](../architecture.md#invalid-results) and
+placeholders — see [architecture.md](../architecture.md#execution-and-run-identity) and
 [accessibility.md](../accessibility.md#invalid-simulation-state).
 `resetToPresetDefaults()` (re-selecting the current preset) is the recovery
 path back to a valid state.

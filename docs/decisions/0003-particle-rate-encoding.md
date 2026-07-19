@@ -1,5 +1,12 @@
 # ADR 0003: Particle rate encoding
 
+**Status:** accepted
+
+**Scope:** preserved specialized reaction-network runtime. A museum Dynamical Portrait that uses
+`event-frequency` declares its own event quantum and cumulative observable in the reviewed
+semantic binding; see [ADR 0006](./0006-dynamical-portrait-runtime.md). The shared constants below
+must not be imposed on unrelated works.
+
 ## Context
 
 The network view needs to show, at a glance, how much material is moving
@@ -21,7 +28,7 @@ turn "how much is flowing" into particle motion.
   divided by the quantum — deterministic given the trajectory and the played
   path.
 - **Particle travel time is a fixed wall-clock duration**
-  (`PARTICLE_TRAVEL_SECONDS = 1.1s`), independent of rate, channel length, or
+  (`PARTICLE_TRAVEL_SECONDS = 1.4s`), independent of rate, channel length, or
   playback speed. It carries no rate meaning at all — it exists purely so a
   particle is visible in motion for a comfortable, legible duration.
 - **Channel stroke width is a separate, continuous encoding** of

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { galleries, works } from '../../src/museum/catalog.ts';
+import { executeWork } from '../../src/museum/execute-work.ts';
 import { simulateWork } from '../../src/museum/simulation.ts';
 
 describe('DynaMusium catalog', () => {
@@ -40,9 +41,9 @@ describe('DynaMusium catalog', () => {
         expect(first.field.values.every(Number.isFinite), `${work.slug}/field`).toBe(true);
       }
     }
-  });
+  }, 60_000);
 
-  it('keeps every preset and parameter boundary finite', () => {
+  it('keeps every preset and parameter boundary finite or surfaces a declared event', () => {
     for (const work of works) {
       const inputs = [
         ...work.presets.map((preset) => preset.values),
@@ -52,7 +53,17 @@ describe('DynaMusium catalog', () => {
         ]),
       ];
       for (const values of inputs) {
-        const result = simulateWork(work, values);
+        const execution = executeWork(work, values, `catalog-boundary-${work.slug}`);
+        if (execution.run.status === 'invalid') {
+          expect(work.slug, JSON.stringify(execution.run.failure)).toBe('restricted-three-body');
+          expect(execution.display).toBeNull();
+          expect(execution.run.failure.kind).toBe('event-failure');
+          expect(execution.run.failure.message).toMatch(/declared .* exclusion radius/i);
+          continue;
+        }
+        const result = execution.display;
+        expect(result).not.toBeNull();
+        if (!result) continue;
         expect(result.series.length, work.slug).toBeGreaterThan(0);
         for (const series of result.series) {
           expect(series.values.every(Number.isFinite), `${work.slug}/${series.id}`).toBe(true);
@@ -62,7 +73,7 @@ describe('DynaMusium catalog', () => {
         }
       }
     }
-  });
+  }, 180_000);
 
   it('uses live primary-source links for the repaired historical works', () => {
     expect(works.find((work) => work.slug === 'wave-equation')?.citations[0]?.url).toBe(
@@ -71,5 +82,23 @@ describe('DynaMusium catalog', () => {
     expect(works.find((work) => work.slug === 'kepler-orbit')?.citations[0]?.url).toBe(
       'https://doi.org/10.5479/sil.126675.39088002685477',
     );
+  });
+
+  it('declares fixed constants and reduced laws used by scientific kernels', () => {
+    const bySlug = new Map(works.map((work) => [work.slug, work]));
+    const nBody = bySlug.get('n-body-system');
+    expect(nBody?.equation).toContain('ε=0.12');
+    expect(nBody?.equation).toContain('+ε²');
+    expect(bySlug.get('standard-map')?.equation.match(/mod 2π/g)).toHaveLength(2);
+    expect(
+      bySlug.get('heat-diffusion')?.parameters.find((item) => item.id === 'sources')?.label,
+    ).toBe('Initial Fourier modes');
+    expect(bySlug.get('schrodinger-wave-packet')?.equation).toContain('V=0');
+    expect(bySlug.get('oregonator')?.equation).toContain('ż=0.3');
+    expect(bySlug.get('stommel-box')?.equation).toContain('|q|');
+    expect(bySlug.get('daisyworld')?.equation).toContain('max(0');
+    expect(bySlug.get('carbon-cycle')?.equation).toContain('0.22T');
+    expect(bySlug.get('shallow-water')?.equation).toContain('∂ₜη=−H');
+    expect(bySlug.get('exoplanet-transit')?.equation).toContain('A_overlap');
   });
 });

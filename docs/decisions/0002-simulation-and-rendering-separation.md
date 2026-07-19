@@ -1,5 +1,12 @@
 # ADR 0002: Simulation and rendering separation
 
+**Status:** accepted
+
+**Scope:** the strict simulation→result→rendering direction remains project-wide. References in
+this ADR to one `Trajectory`, `frameAt`, and the Zustand store describe the preserved specialized
+reaction-network runtime. Museum-wide result, evidence, and mapping contracts are specified by
+[ADR 0006](./0006-dynamical-portrait-runtime.md).
+
 ## Context
 
 KinetiFlux's numerical results (species quantities, cumulative output,
