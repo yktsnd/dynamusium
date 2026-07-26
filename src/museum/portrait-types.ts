@@ -296,6 +296,16 @@ export interface RunProvenance {
     precision: 'float64' | 'float32';
     fixedStep?: number;
     iterations?: number;
+    adaptive?: {
+      relativeTolerance: number;
+      absoluteTolerance: number;
+      minimumStep: number;
+      maximumStep: number;
+      acceptedSteps: number;
+      rejectedSteps: number;
+      maximumAcceptedErrorNorm: number;
+      sampleSchedule: string;
+    };
   };
   interval: readonly [number, number];
   initialCondition: Record<string, number> | { ref: string };
@@ -307,6 +317,12 @@ export interface RunProvenance {
     seed: string;
     sampleSchedule: string;
     ensembleSize?: number;
+  };
+  eventDetection?: {
+    id: string;
+    surface: string;
+    rootTolerance: number;
+    interiorCheck?: string;
   };
 }
 

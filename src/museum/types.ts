@@ -105,6 +105,15 @@ export interface WorkResult {
       /** Time-major raw state values; never screen coordinates. */
       values: number[];
     };
+    terminalEvent?: {
+      id: string;
+      time: number;
+      state: number[];
+      primary: string;
+      surfaceResidual: number;
+      bracketWidth: number;
+      message: string;
+    };
   };
 }
 

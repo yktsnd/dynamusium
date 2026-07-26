@@ -631,11 +631,11 @@ export const portraitDefinitions = {
   }),
   'restricted-three-body': definition({
     lawRef: 'cr3bp-rotating-frame-v1',
-    law: 'Planar circular restricted three-body equations in the rotating frame; collision proximity is an explicit invalid event.',
+    law: 'Planar circular restricted three-body equations in the rotating frame; the finite segment terminates at a declared close-encounter resolution boundary.',
     formal: flow('cr3bp-rotating-frame-v1', ['x', 'y', 'vx', 'vy']),
     representation: 'governing-law-execution',
     runtimeKind: 'ode',
-    executionProfile: 'rk4-fixed-event-cr3bp',
+    executionProfile: 'dormand-prince-54-event-cr3bp',
     output: 'trajectory',
     objectKind: 'orbit-segment',
     primaryTruth:
@@ -645,7 +645,10 @@ export const portraitDefinitions = {
       [-2, 2],
       [-2, 2],
     ],
-    limitations: ['Finite planar restricted model.'],
+    limitations: [
+      'Finite planar restricted model.',
+      'The close-encounter boundary is a numerical resolution limit, not a physical collision claim.',
+    ],
     capabilities: ['conservation', 'recurrence'],
     validations: ['step-halving', 'energy-residual'],
   }),
@@ -873,25 +876,32 @@ function reviewedMappings(
     preserves: ['current scientific state', 'numeric evidence', 'fixed visual encoding'],
   };
   if (kernel === 'lorenz') {
-    return [
-      {
-        id: `${objectId}-xz-orbit`,
+    const reviewedDomains = [
+      { id: 'canonical', x: [-24, 24] as const, z: [0, 50] as const },
+      { id: 'quiet', x: [-12, 12] as const, z: [0, 24] as const },
+      { id: 'threshold', x: [-22, 22] as const, z: [0, 44] as const },
+    ];
+    return regimeIds.map((regimeId, index): SemanticVisualLayer => {
+      const domain = reviewedDomains[index] ?? reviewedDomains[0];
+      if (!domain) throw new Error('Lorenz needs at least one reviewed visual domain.');
+      return {
+        id: `${objectId}-xz-orbit-${domain.id}`,
         objectId,
-        appliesToRegimeIds: regimeIds,
+        appliesToRegimeIds: [regimeId],
         mark: 'path',
         bindings: [
           {
             quantityRef: 'x',
             channel: 'position-x',
             scale: 'linear',
-            domain: [-24, 24],
+            domain: domain.x,
             outOfDomain: 'overflow-indicator',
           },
           {
             quantityRef: 'z',
             channel: 'position-y',
             scale: 'linear',
-            domain: [0, 50],
+            domain: domain.z,
             outOfDomain: 'overflow-indicator',
           },
         ],
@@ -910,8 +920,55 @@ function reviewedMappings(
           dataRef: 'post-burn-in-xz-occupancy',
           preserves: ['two-lobe support', 'fixed x-z projection'],
         },
-      },
+      };
+    });
+  }
+  if (kernel === 'lotka-volterra') {
+    const reviewedDomains = [
+      { id: 'canonical', maximum: 5 },
+      { id: 'quiet', maximum: 16 },
+      { id: 'threshold', maximum: 4.5 },
     ];
+    return regimeIds.map((regimeId, index): SemanticVisualLayer => {
+      const domain = reviewedDomains[index] ?? reviewedDomains[0];
+      if (!domain) throw new Error('Lotka–Volterra needs at least one reviewed visual domain.');
+      return {
+        id: `${objectId}-phase-orbit-${domain.id}`,
+        objectId,
+        appliesToRegimeIds: [regimeId],
+        mark: 'path',
+        bindings: [
+          {
+            quantityRef: 'prey',
+            channel: 'position-x',
+            scale: 'linear',
+            domain: [0, domain.maximum],
+            outOfDomain: 'overflow-indicator',
+          },
+          {
+            quantityRef: 'predator',
+            channel: 'position-y',
+            scale: 'linear',
+            domain: [0, domain.maximum],
+            outOfDomain: 'overflow-indicator',
+          },
+        ],
+        projection: {
+          coordinateRefs: ['prey', 'predator'],
+          method: 'selected-coordinates',
+          aspect: 'equal-data-units',
+        },
+        scientificTime: {
+          quantityRef: 'simulation-time',
+          mode: 'cursor',
+          interpolation: 'linear',
+        },
+        reducedMotion: {
+          strategy: 'accumulated-density',
+          preserves: ['closed-orbit support', 'fixed prey-predator projection'],
+        },
+      };
+    });
   }
   if (kernel === 'reaction-chain') {
     return [

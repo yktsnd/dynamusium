@@ -14,6 +14,7 @@ The implementation uses the method that matches the declared mathematical object
 | ------------------------------------ | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Legacy collection ODE profiles       | Explicit fixed-step RK4 with per-stage dimension and finite checks           | M1 unless that work emits its declared convergence / reference checks        |
 | Reviewed Lorenz profile              | Explicit fixed-step RK4 plus a separate half-step comparison                 | Short-window step halving and equilibrium / finite-recurrence qualifications |
+| Restricted Three-Body                | Adaptive Dormand–Prince 5(4) with localized close-encounter terminal event   | Embedded error norm, Jacobi residual, tolerance refinement, event residual   |
 | Fed reaction chain                   | Fixed-step RK4 of the declared forced compartment law                        | Positivity, mass balance, feed integral, monotone collection, step halving   |
 | Kuramoto network                     | Fixed-step RK4 on twelve phase coordinates                                   | Phase-shift-aware step comparison, `0 <= r <= 1`, locking statistic          |
 | α-FPUT chain                         | Velocity Verlet on the full position / momentum state                        | Exact Hamiltonian residual, recurrence qualification, refinement             |
@@ -45,6 +46,16 @@ There is no `NaN -> 0` fallback and no arbitrary global cap such as `+/-1e6`. Mi
 components are not filled with zero. A violation produces `WorkRunResult.status === 'invalid'`,
 clears the current display, stops playback, and exposes a failure message. The previous successful
 trajectory is not relabelled as the result of the new parameters.
+
+A declared terminal scientific event is different from solver failure. The Restricted Three-Body
+runtime stops at the first localized `r = 0.03` close-encounter **resolution boundary**, returns the
+finite partial orbit, and records event time, primary, surface residual, bracket width, and adaptive
+provenance. This boundary is not presented as a physical collision. Rejected or intermediate
+Runge–Kutta stages cannot themselves trigger the event. Accepted steps are inspected at
+quarter-step surface probes, and a conservative line-segment guard against both primary exclusion
+circles forces step bisection when an entry and exit could otherwise occur between positive
+samples. The first bracketed entry is localized to the declared root tolerance. Failure to satisfy
+adaptive error control, guarded-step resolution, or event localization still invalidates the run.
 
 Small roundoff correction remains allowed only where a specialized solver declares a physical
 domain and named tolerance, such as the legacy nonnegative reaction quantities. It is counted in

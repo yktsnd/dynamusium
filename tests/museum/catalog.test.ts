@@ -54,13 +54,10 @@ describe('DynaMusium catalog', () => {
       ];
       for (const values of inputs) {
         const execution = executeWork(work, values, `catalog-boundary-${work.slug}`);
-        if (execution.run.status === 'invalid') {
-          expect(work.slug, JSON.stringify(execution.run.failure)).toBe('restricted-three-body');
-          expect(execution.display).toBeNull();
-          expect(execution.run.failure.kind).toBe('event-failure');
-          expect(execution.run.failure.message).toMatch(/declared .* exclusion radius/i);
-          continue;
-        }
+        expect(execution.run.status, `${work.slug}: ${JSON.stringify(execution.run)}`).toBe(
+          'valid',
+        );
+        if (execution.run.status !== 'valid') continue;
         const result = execution.display;
         expect(result).not.toBeNull();
         if (!result) continue;

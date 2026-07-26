@@ -13,6 +13,7 @@ import {
   requireVisualBinding,
   visualLayers,
 } from './semantic-visual.ts';
+import { overflowExcursionStarts, visibleTrajectoryPath } from './trajectory-path.ts';
 
 const flagshipWorks = works.filter((work) => work.tier === 'flagship');
 
@@ -219,10 +220,13 @@ function range(values: number[]) {
 
 function pathForSeries(series: Series, width = 800, height = 120) {
   const valueRange = range(series.values);
+  const verticalInset = height * 0.12;
+  const drawableHeight = height - 2 * verticalInset;
   return series.values
     .map((value, index) => {
       const x = (index / Math.max(1, series.values.length - 1)) * width;
-      const y = height - ((value - valueRange.min) / valueRange.span) * height;
+      const y =
+        height - verticalInset - ((value - valueRange.min) / valueRange.span) * drawableHeight;
       return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(' ');
@@ -667,17 +671,24 @@ function TrajectoryArtwork({
   work,
   result,
   progress,
+  regimeId,
 }: {
   work: WorkManifest;
   result: WorkResult;
   progress: number;
+  regimeId: string | null;
 }) {
-  const pathLayer = visualLayers(work).find(
+  const pathLayers = visualLayers(work).filter(
     (layer) =>
       layer.mark === 'path' &&
       layer.bindings.some((binding) => binding.channel === 'position-x') &&
       layer.bindings.some((binding) => binding.channel === 'position-y'),
   );
+  const reviewedLayer = pathLayers.find(
+    (layer) => regimeId !== null && layer.appliesToRegimeIds.includes(regimeId),
+  );
+  const pathLayer = reviewedLayer ?? pathLayers[0];
+  const usesCustomFallback = reviewedLayer === undefined && regimeId === 'custom-unreviewed';
   const xBinding = pathLayer?.bindings.find((binding) => binding.channel === 'position-x');
   const yBinding = pathLayer?.bindings.find((binding) => binding.channel === 'position-y');
   if (!pathLayer || !xBinding || !yBinding) {
@@ -713,31 +724,31 @@ function TrajectoryArtwork({
       y: encodeNumericValue(yValue, yBinding),
     };
   });
-  const overflowCount = encodings.reduce(
-    (count, point) => count + Number(point.x.outsideDomain) + Number(point.y.outsideDomain),
-    0,
-  );
-  const path = encodings
-    .map((point, index) => {
-      const x = left + point.x.normalized * plotWidth;
-      const y = bottom - point.y.normalized * plotHeight;
-      return `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  const screenPoints = encodings.map((point) => ({
+    x: left + point.x.normalized * plotWidth,
+    y: bottom - point.y.normalized * plotHeight,
+    outsideDomain: point.x.outsideDomain || point.y.outsideDomain,
+  }));
+  const overflowSampleCount = screenPoints.filter((point) => point.outsideDomain).length;
+  const overflowMarkers = overflowExcursionStarts(screenPoints);
+  const path = visibleTrajectoryPath(screenPoints);
   const pointIndex = resultIndex(result, progress);
-  const active = encodings[pointIndex];
+  const active = screenPoints[pointIndex];
   if (!active) return <SemanticDataError message="trajectory cursor is missing" />;
-  const activeX = left + active.x.normalized * plotWidth;
-  const activeY = bottom - active.y.normalized * plotHeight;
   return (
     <svg
       viewBox="0 0 1000 600"
+      data-overflow-samples={overflowSampleCount}
       role="img"
       aria-label={`${work.title} computed trajectory. ${describeBinding(xBinding)}. ${describeBinding(
         yBinding,
       )}. Projection ${pathLayer.projection?.method ?? 'identity'}, ${
         pathLayer.projection?.aspect ?? 'declared-distortion'
-      }.`}
+      }.${
+        overflowSampleCount > 0
+          ? ` ${overflowSampleCount} samples are outside the declared scale and are not joined into the visible path.`
+          : ' All samples are inside the declared scale.'
+      }${usesCustomFallback ? ' Custom parameters use the canonical fixed-scale fallback.' : ''}`}
     >
       <defs>
         <linearGradient id="trajectory-gradient" x1="0" y1="0" x2="1" y2="1">
@@ -751,15 +762,45 @@ function TrajectoryArtwork({
       </defs>
       <circle className="art-orbit" cx="500" cy="300" r="244" />
       <circle className="art-orbit art-orbit-small" cx="500" cy="300" r="158" />
+      <rect
+        className="trajectory-domain-frame"
+        x={left}
+        y={bottom - plotHeight}
+        width={plotWidth}
+        height={plotHeight}
+      />
       <path className="trajectory-glow" d={path} />
       <path className="trajectory-line" d={path} />
-      <circle className="active-glow" cx={activeX} cy={activeY} r="22" />
-      <circle className="active-point" cx={activeX} cy={activeY} r="6" />
-      {overflowCount > 0 && (
+      {overflowMarkers.slice(0, 24).map((marker, index) => (
+        <path
+          key={`${marker.x}-${marker.y}-${index}`}
+          className="trajectory-overflow-marker"
+          d={`M${(marker.x - 5).toFixed(1)},${marker.y.toFixed(1)}h10M${marker.x.toFixed(
+            1,
+          )},${(marker.y - 5).toFixed(1)}v10`}
+        />
+      ))}
+      <circle
+        className={active.outsideDomain ? 'active-glow active-overflow' : 'active-glow'}
+        cx={active.x}
+        cy={active.y}
+        r="22"
+      />
+      <circle
+        className={active.outsideDomain ? 'active-point active-overflow' : 'active-point'}
+        cx={active.x}
+        cy={active.y}
+        r="6"
+      />
+      {overflowSampleCount > 0 && (
         <text x="950" y="560" textAnchor="end" className="overflow-label">
-          {overflowCount} coordinates outside declared scale
+          {overflowSampleCount} samples clipped outside declared scale
         </text>
       )}
+      <text x={left} y="568" className="projection-scale-label">
+        {xBinding.quantityRef} [{xMinimum}, {xMaximum}] · {yBinding.quantityRef} [{yMinimum},{' '}
+        {yMaximum}] · {preservesUnits ? 'equal units' : 'declared distortion'}
+      </text>
     </svg>
   );
 }
@@ -769,11 +810,13 @@ function ScientificArtwork({
   result,
   progress,
   reducedMotion,
+  regimeId,
 }: {
   work: WorkManifest;
   result: WorkResult;
   progress: number;
   reducedMotion: boolean;
+  regimeId: string | null;
 }) {
   let primaryImage;
   if (result.field) primaryImage = <FieldCanvas work={work} result={result} progress={progress} />;
@@ -791,7 +834,9 @@ function ScientificArtwork({
   } else if (work.kernel === 'fput') {
     primaryImage = <ModeEnergyArtwork work={work} result={result} progress={progress} />;
   } else {
-    primaryImage = <TrajectoryArtwork work={work} result={result} progress={progress} />;
+    primaryImage = (
+      <TrajectoryArtwork work={work} result={result} progress={progress} regimeId={regimeId} />
+    );
   }
   const composition = work.schemaVersion === 2 ? work.portrait.composition : null;
   const compositionStyle = composition
@@ -840,42 +885,40 @@ function TracePanel({
   const visibleSeries = claimSeries(work, result).slice(0, 5);
   return (
     <section className="trace-panel" aria-label="Computed time series">
-      <svg
-        viewBox="0 0 800 130"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label="Synchronized model traces"
-      >
-        {[1, 2, 3].map((line) => (
-          <line
-            key={line}
-            x1="0"
-            x2="800"
-            y1={line * 32.5}
-            y2={line * 32.5}
-            className="trace-grid"
-          />
-        ))}
-        {visibleSeries.map((series) => (
-          <path
-            key={series.id}
-            d={pathForSeries(series)}
-            stroke={series.color}
-            className="trace-line"
-          />
-        ))}
-        <line x1={progress * 800} x2={progress * 800} y1="0" y2="130" className="trace-cursor" />
-      </svg>
-      <div className="trace-legend">
-        {visibleSeries.map((series) => (
-          <span
-            key={series.id}
-            title={`Secondary evidence trace; independently auto-scaled to [${range(series.values).min}, ${range(series.values).max}]`}
-          >
-            <i style={{ background: series.color }} />
-            {series.label} · auto
-          </span>
-        ))}
+      <div className="trace-series-list">
+        {visibleSeries.map((series) => {
+          const valueRange = range(series.values);
+          const rangeLabel = `${valueRange.min.toPrecision(4)} … ${valueRange.max.toPrecision(4)}`;
+          return (
+            <div className="trace-series" key={series.id}>
+              <svg
+                viewBox="0 0 800 100"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={`${series.label} synchronized trace; independently scaled to ${rangeLabel}`}
+              >
+                <line x1="0" x2="800" y1="50" y2="50" className="trace-grid" />
+                <path
+                  d={pathForSeries(series, 800, 100)}
+                  stroke={series.color}
+                  className="trace-line"
+                />
+                <line
+                  x1={progress * 800}
+                  x2={progress * 800}
+                  y1="0"
+                  y2="100"
+                  className="trace-cursor"
+                />
+              </svg>
+              <span title="Secondary evidence; independent fixed-run range shown">
+                <i style={{ background: series.color }} />
+                <b>{series.label}</b>
+                <small>{rangeLabel}</small>
+              </span>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -945,6 +988,9 @@ function StudyPanel({
         <code>{work.equation}</code>
         <small>{result.diagnostics}</small>
       </section>
+      {result.numerical?.terminalEvent && (
+        <ScientificEventNotice event={result.numerical.terminalEvent} inline />
+      )}
       {portrait && run && (
         <>
           <section className="science-status">
@@ -1053,6 +1099,35 @@ function StudyPanel({
                 <dt>Initial condition</dt>
                 <dd>{JSON.stringify(run.provenance.initialCondition)}</dd>
               </div>
+              {run.provenance.execution.adaptive && (
+                <div>
+                  <dt>Adaptive control</dt>
+                  <dd>
+                    <span>
+                      rtol {run.provenance.execution.adaptive.relativeTolerance} · atol{' '}
+                      {run.provenance.execution.adaptive.absoluteTolerance}
+                    </span>
+                    <span>
+                      accepted {run.provenance.execution.adaptive.acceptedSteps} · rejected{' '}
+                      {run.provenance.execution.adaptive.rejectedSteps}
+                    </span>
+                    <span>{run.provenance.execution.adaptive.sampleSchedule}</span>
+                  </dd>
+                </div>
+              )}
+              {run.provenance.eventDetection && (
+                <div>
+                  <dt>Event detection</dt>
+                  <dd>
+                    <span>{run.provenance.eventDetection.id}</span>
+                    <span>{run.provenance.eventDetection.surface}</span>
+                    <span>root tolerance {run.provenance.eventDetection.rootTolerance}</span>
+                    {run.provenance.eventDetection.interiorCheck && (
+                      <span>{run.provenance.eventDetection.interiorCheck}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
               {run.provenance.grid && (
                 <div>
                   <dt>Grid</dt>
@@ -1198,6 +1273,91 @@ function StudyPanel({
   );
 }
 
+type TerminalScientificEvent = NonNullable<NonNullable<WorkResult['numerical']>['terminalEvent']>;
+
+function ScientificEventNotice({
+  event,
+  inline = false,
+}: {
+  event: TerminalScientificEvent;
+  inline?: boolean;
+}) {
+  return (
+    <section className={`scientific-event${inline ? ' is-inline' : ''}`} role="status">
+      <strong>Terminal scientific event · t={event.time.toFixed(4)}</strong>
+      <span>{event.message}</span>
+    </section>
+  );
+}
+
+function ParameterDrawer({
+  work,
+  values,
+  status,
+  onChange,
+  onInteractionChange,
+}: {
+  work: WorkManifest;
+  values: Record<string, number>;
+  status: 'idle' | 'loading' | 'valid' | 'invalid';
+  onChange: (parameterId: string, value: number) => void;
+  onInteractionChange: (active: boolean) => void;
+}) {
+  return (
+    <section
+      className="parameter-drawer"
+      aria-label="Model parameters"
+      aria-busy={status === 'loading'}
+    >
+      {work.parameters.map((parameter) => {
+        const value = values[parameter.id] ?? parameter.default;
+        return (
+          <label key={parameter.id}>
+            <span>
+              {parameter.label}
+              <i>
+                {parameter.symbol} = {value.toFixed(parameter.step < 0.01 ? 3 : 2)}
+              </i>
+            </span>
+            <input
+              type="range"
+              min={parameter.min}
+              max={parameter.max}
+              step={parameter.step}
+              value={value}
+              onPointerDown={() => onInteractionChange(true)}
+              onPointerUp={() => onInteractionChange(false)}
+              onPointerCancel={() => onInteractionChange(false)}
+              onKeyDown={(event) => {
+                if (
+                  [
+                    'ArrowLeft',
+                    'ArrowRight',
+                    'ArrowUp',
+                    'ArrowDown',
+                    'Home',
+                    'End',
+                    'PageUp',
+                    'PageDown',
+                  ].includes(event.key)
+                ) {
+                  onInteractionChange(true);
+                }
+              }}
+              onKeyUp={() => onInteractionChange(false)}
+              onBlur={() => onInteractionChange(false)}
+              onChange={(event) => onChange(parameter.id, Number(event.target.value))}
+            />
+          </label>
+        );
+      })}
+      <span className="sr-only" role="status" aria-live="polite">
+        {status === 'loading' ? 'Computing the selected parameters' : ''}
+      </span>
+    </section>
+  );
+}
+
 function WorkExperience({
   work,
   initialMode,
@@ -1218,9 +1378,14 @@ function WorkExperience({
   });
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(true);
+  const [parameterInteractionActive, setParameterInteractionActive] = useState(false);
   const previousTime = useRef<number | null>(null);
   const reducedMotion = useReducedMotion();
-  const { result, run, error, status } = useWorkSimulation(work, values);
+  const { result, run, error, status } = useWorkSimulation(
+    work,
+    values,
+    parameterInteractionActive,
+  );
 
   useEffect(() => {
     if (!playing || !result || reducedMotion) return;
@@ -1255,52 +1420,19 @@ function WorkExperience({
     setPresetId(id);
     setValues({ ...preset.values });
     setProgress(0);
+    setPlaying(false);
     const query = new URLSearchParams(window.location.search);
     query.set('preset', id);
     window.history.replaceState({}, '', `${window.location.pathname}?${query.toString()}`);
   };
-
-  if (!result) {
-    return (
-      <main className={`work-experience mode-${mode}`} aria-busy={status === 'loading'}>
-        <header className="work-header">
-          <button type="button" className="back-button" onClick={onBack}>
-            ← Collection
-          </button>
-          <div className="work-identification">
-            <span>{galleries.find((gallery) => gallery.id === work.gallery)?.label}</span>
-            <strong>{work.title}</strong>
-          </div>
-        </header>
-        <div className="work-stage">
-          <section className="work-caption">
-            <p className="eyebrow">
-              {work.year} · {work.authors.join(' / ')}
-            </p>
-            <h1>{work.title}</h1>
-            <p>{work.subtitle}</p>
-          </section>
-          <div
-            className="simulation-error"
-            role={status === 'invalid' ? 'alert' : 'status'}
-            aria-live="polite"
-          >
-            {status === 'invalid'
-              ? (error ?? 'The current parameters did not produce a valid numerical result.')
-              : 'Computing the current scientific state…'}
-            {status === 'invalid' && (
-              <button type="button" onClick={() => selectPreset('canonical')}>
-                Reset to canonical parameters
-              </button>
-            )}
-          </div>
-        </div>
-      </main>
-    );
-  }
+  const changeParameter = (parameterId: string, value: number) => {
+    setValues((current) => ({ ...current, [parameterId]: value }));
+    setPresetId('custom');
+    setPlaying(false);
+  };
 
   return (
-    <main className={`work-experience mode-${mode}`}>
+    <main className={`work-experience mode-${mode}`} aria-busy={status === 'loading'}>
       <header className="work-header">
         <button type="button" className="back-button" onClick={onBack}>
           ← Collection
@@ -1337,98 +1469,102 @@ function WorkExperience({
             </small>
           )}
         </section>
-        <ScientificArtwork
-          work={work}
-          result={result}
-          progress={progress}
-          reducedMotion={reducedMotion}
-        />
-        {error && (
-          <div className="simulation-error" role="alert">
-            {error}
+        {result ? (
+          <>
+            <ScientificArtwork
+              work={work}
+              result={result}
+              progress={progress}
+              reducedMotion={reducedMotion}
+              regimeId={run?.status === 'valid' ? run.portrait.regimeId : null}
+            />
+            {result.numerical?.terminalEvent && mode !== 'study' && (
+              <ScientificEventNotice event={result.numerical.terminalEvent} />
+            )}
+            {mode === 'study' && (
+              <StudyPanel
+                work={work}
+                result={result}
+                run={run?.status === 'valid' ? run : null}
+                progress={progress}
+              />
+            )}
+          </>
+        ) : (
+          <div
+            className={status === 'invalid' ? 'simulation-error' : 'simulation-pending'}
+            role={status === 'invalid' ? 'alert' : 'status'}
+            aria-live="polite"
+          >
+            {status === 'invalid'
+              ? (error ?? 'The current parameters did not produce a valid numerical result.')
+              : 'Computing the current scientific state…'}
+            {status === 'invalid' && (
+              <button type="button" onClick={() => selectPreset('canonical')}>
+                Reset to canonical parameters
+              </button>
+            )}
           </div>
         )}
-        {mode === 'study' && (
-          <StudyPanel
-            work={work}
-            result={result}
-            run={run?.status === 'valid' ? run : null}
-            progress={progress}
-          />
-        )}
       </div>
-      <TracePanel work={work} result={result} progress={progress} />
-      <section className="work-controls" aria-label="Simulation controls">
-        <button
-          type="button"
-          className="play-control"
-          disabled={reducedMotion}
-          onClick={() => setPlaying((value) => !value)}
-        >
-          {reducedMotion ? '◇' : playing ? 'Ⅱ' : '▶'}
-          <span>{reducedMotion ? 'Static view' : playing ? 'Pause' : 'Play'}</span>
-        </button>
-        <label className="timeline-control">
-          <span className="sr-only">Time</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.001"
-            value={progress}
-            onChange={(event) => {
-              setProgress(Number(event.target.value));
-              setPlaying(false);
-            }}
-          />
-        </label>
-        <span className="time-readout">
-          {scientificTimeAt(result, progress).toFixed(1)} / {result.duration.toFixed(1)}
-        </span>
-        <div className="preset-controls" role="group" aria-label="Simulation preset">
-          {work.presets.map((preset) => (
-            <button
-              className={presetId === preset.id ? 'is-active' : ''}
-              type="button"
-              key={preset.id}
-              aria-label={preset.label}
-              aria-pressed={presetId === preset.id}
-              onClick={() => selectPreset(preset.id)}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="parameter-drawer" aria-label="Model parameters">
-        {work.parameters.map((parameter) => {
-          const value = values[parameter.id] ?? parameter.default;
-          return (
-            <label key={parameter.id}>
-              <span>
-                {parameter.label}
-                <i>
-                  {parameter.symbol} = {value.toFixed(parameter.step < 0.01 ? 3 : 2)}
-                </i>
-              </span>
-              <input
-                type="range"
-                min={parameter.min}
-                max={parameter.max}
-                step={parameter.step}
-                value={value}
-                onChange={(event) => {
-                  setValues((current) => ({
-                    ...current,
-                    [parameter.id]: Number(event.target.value),
-                  }));
-                  setPresetId('custom');
-                }}
-              />
-            </label>
-          );
-        })}
-      </section>
+      {result ? (
+        <TracePanel work={work} result={result} progress={progress} />
+      ) : (
+        <section className="trace-panel trace-panel-pending" aria-hidden="true" />
+      )}
+      {result ? (
+        <section className="work-controls" aria-label="Simulation controls">
+          <button
+            type="button"
+            className="play-control"
+            disabled={reducedMotion}
+            onClick={() => setPlaying((value) => !value)}
+          >
+            {reducedMotion ? '◇' : playing ? 'Ⅱ' : '▶'}
+            <span>{reducedMotion ? 'Static view' : playing ? 'Pause' : 'Play'}</span>
+          </button>
+          <label className="timeline-control">
+            <span className="sr-only">Time</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.001"
+              value={progress}
+              onChange={(event) => {
+                setProgress(Number(event.target.value));
+                setPlaying(false);
+              }}
+            />
+          </label>
+          <span className="time-readout">
+            {scientificTimeAt(result, progress).toFixed(1)} / {result.duration.toFixed(1)}
+          </span>
+          <div className="preset-controls" role="group" aria-label="Simulation preset">
+            {work.presets.map((preset) => (
+              <button
+                className={presetId === preset.id ? 'is-active' : ''}
+                type="button"
+                key={preset.id}
+                aria-label={preset.label}
+                aria-pressed={presetId === preset.id}
+                onClick={() => selectPreset(preset.id)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="work-controls work-controls-pending" aria-hidden="true" />
+      )}
+      <ParameterDrawer
+        work={work}
+        values={values}
+        status={status}
+        onChange={changeParameter}
+        onInteractionChange={setParameterInteractionActive}
+      />
     </main>
   );
 }
