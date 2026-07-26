@@ -95,7 +95,8 @@ validates result dimensions and finiteness. `executeWork()` wraps it with the pu
 - `RunIdentity` records a request ID, run ID, work slug, resolved parameters, optional preset,
   canonical manifest hash, and input hash.
 - `RunProvenance` records the kernel and definition hash, execution method and version, precision,
-  interval, initial condition, optional grid / boundary conditions, and stochastic seed schedule.
+  interval, initial condition, optional fixed/adaptive controls, event detection, grid / boundary
+  conditions, and stochastic seed schedule.
 - `RunPayload` carries a time-major trajectory, a time-indexed field trajectory, or an ensemble.
   Raw state coordinates are distinct from screen geometry.
 - `RunCheckResult` separates hard validity checks from claim-level assessments and keeps metrics,
@@ -107,6 +108,14 @@ content. `executeWork()` repeats the complete kernel call with the same resolved
 and exact equality of the resulting `WorkResult` is a hard `deterministic-replay` check. The worker
 associates every response with its request. Loading a new input clears the old display; a late
 response is ignored, and a failed run cannot remain visible as if it belonged to the new controls.
+
+Native parameter inputs remain mounted while a replacement run is pending. Their displayed value
+updates on every input event, playback pauses, and the old scientific layer is hidden immediately.
+Worker creation is suspended while a pointer or keyboard adjustment is active, then delayed until a
+160 ms quiet period. A drag therefore coalesces into one fully validated execution instead of
+constructing and terminating a worker for every pixel. The empty artwork / trace / transport
+placeholders preserve geometry and pointer capture during that pending interval; coalescing never
+weakens deterministic replay or skips checks for the final value.
 
 The original typed `SimulationResult` contract still governs the specialized reaction-network
 solver: negative excursions beyond tolerance, non-finite values, and decreasing cumulative output

@@ -30,9 +30,18 @@ uncertainty, or scientific value, so hiding it loses no information.
 ### Invalid and loading results
 
 Starting a new calculation removes the previous display and marks the work view `aria-busy` while
-loading. An invalid run is announced through a live `role="alert"`, explains that the current
+loading. The parameter drawer and the original native range element remain mounted, so pointer
+capture and keyboard focus survive rapid input. Scientific execution waits until the active pointer
+or keyboard adjustment ends, while a live status announces pending computation.
+An invalid run is announced through a live `role="alert"`, explains that the current
 parameters did not produce a valid result, and offers a native button to restore the canonical
 preset. Playback and charts are not left attached to a stale trajectory.
+
+A localized Restricted Three-Body close encounter is a valid terminal scientific event, not a
+generic error. Its time and resolution-boundary qualification are exposed in a `role="status"`;
+the trajectory and controls remain available. Observe and Exhibit use a compact stage notice;
+Study places the same status in the panel's document flow so it cannot cover provenance or source
+links at desktop or narrow widths.
 
 Study reports hard and claim-level checks with text (`passed`, `failed`, or `not-run`), execution
 provenance, maturity, and limitations. Status never depends on green / red styling alone.
@@ -55,7 +64,7 @@ same numerical payload and semantic mappings remain available in Study.
 | Modal energy         | Column height / area                  | Mode label, numeric energy, Hamiltonian residual                  |
 | Field value          | Sequential or diverging raster        | Component identity, declared domain, traces, and Study values     |
 | Validation status    | Optional status styling               | Status word, metric, tolerance, message, maturity, and limit text |
-| Scale overflow       | Edge / overflow treatment             | “OUTSIDE SCALE” or coordinate count text                          |
+| Scale overflow       | Broken path plus excursion markers    | Explicit clipped-sample count and fixed-domain text               |
 
 ## Preserved reaction-network module
 

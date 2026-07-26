@@ -2,6 +2,7 @@ import type { RuntimeKind, Series, WorkManifest, WorkResult } from './types.ts';
 import { simulateReviewedAnalyticField } from './runtimes/analytic-field-runtime.ts';
 import { simulateReviewedAnalyticOrbit } from './runtimes/analytic-orbital-runtime.ts';
 import { simulateReviewedCollective } from './runtimes/collective-runtime.ts';
+import { simulateReviewedCr3bp } from './runtimes/cr3bp-runtime.ts';
 import { simulateReviewedField } from './runtimes/field-runtime.ts';
 import { simulateReviewedFoundation } from './runtimes/foundation-runtime.ts';
 
@@ -157,39 +158,6 @@ function resultFromStates(
 function xOverOneMinusExpNegative(x: number, scale: number): number {
   if (x === 0) return scale;
   return -x / Math.expm1(-x / scale);
-}
-
-const CR3BP_EXCLUSION_RADIUS = 0.03;
-
-function distanceFromPointToSegment(
-  startX: number,
-  startY: number,
-  endX: number,
-  endY: number,
-  pointX: number,
-  pointY: number,
-): number {
-  const deltaX = endX - startX;
-  const deltaY = endY - startY;
-  const squaredLength = deltaX * deltaX + deltaY * deltaY;
-  if (squaredLength === 0) return Math.hypot(startX - pointX, startY - pointY);
-  const projection = ((pointX - startX) * deltaX + (pointY - startY) * deltaY) / squaredLength;
-  if (projection <= 0) return Math.hypot(startX - pointX, startY - pointY);
-  if (projection >= 1) return Math.hypot(endX - pointX, endY - pointY);
-  return Math.hypot(startX + projection * deltaX - pointX, startY + projection * deltaY - pointY);
-}
-
-function assertCr3bpPosition(x: number, y: number, mu: number, context: string): void {
-  const distanceToPrimaryOne = Math.hypot(x + mu, y);
-  const distanceToPrimaryTwo = Math.hypot(x - 1 + mu, y);
-  if (
-    distanceToPrimaryOne <= CR3BP_EXCLUSION_RADIUS ||
-    distanceToPrimaryTwo <= CR3BP_EXCLUSION_RADIUS
-  ) {
-    throw new Error(
-      `CR3BP close-encounter event ${context} entered the declared ${CR3BP_EXCLUSION_RADIUS} exclusion radius.`,
-    );
-  }
 }
 
 export function hodgkinHuxleyAlphaRates(voltage: number): {
@@ -501,69 +469,6 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
       });
       return resultFromStates(d, solved.times, solved.states, ['Atmosphere', 'Ocean', 'Biosphere']);
     }
-    case 'restricted-three-body': {
-      const mu = p.massRatio ?? 0.012;
-      const velocity = p.velocity ?? 0.62;
-      const initial: [number, number, number, number] = [0.72, 0.05, 0, velocity];
-      assertCr3bpPosition(initial[0], initial[1], mu, 'initial condition');
-      const solved = rk4(
-        initial,
-        d,
-        (_t, state) => {
-          const x = stateValue(state, 0, 'CR3BP x');
-          const y = stateValue(state, 1, 'CR3BP y');
-          const vx = stateValue(state, 2, 'CR3BP vx');
-          const vy = stateValue(state, 3, 'CR3BP vy');
-          const r1 = Math.hypot(x + mu, y);
-          const r2 = Math.hypot(x - 1 + mu, y);
-          assertCr3bpPosition(x, y, mu, 'at an RK4 stage');
-          const ax = x + 2 * vy - ((1 - mu) * (x + mu)) / r1 ** 3 - (mu * (x - 1 + mu)) / r2 ** 3;
-          const ay = y - 2 * vx - ((1 - mu) * y) / r1 ** 3 - (mu * y) / r2 ** 3;
-          return [vx, vy, ax, ay];
-        },
-        1600,
-        (previous, next, step, nextTime) => {
-          const previousX = stateValue(previous, 0, 'CR3BP previous x');
-          const previousY = stateValue(previous, 1, 'CR3BP previous y');
-          const nextX = stateValue(next, 0, 'CR3BP next x');
-          const nextY = stateValue(next, 1, 'CR3BP next y');
-          for (const primaryX of [-mu, 1 - mu]) {
-            if (
-              distanceFromPointToSegment(previousX, previousY, nextX, nextY, primaryX, 0) <=
-              CR3BP_EXCLUSION_RADIUS
-            ) {
-              throw new Error(
-                `CR3BP close-encounter event crossed the declared ${CR3BP_EXCLUSION_RADIUS} exclusion radius between step ${step - 1} and step ${step} (t=${nextTime}).`,
-              );
-            }
-          }
-        },
-      );
-      const states = solved.states.map((state) => {
-        const x = stateValue(state, 0, 'CR3BP x');
-        const y = stateValue(state, 1, 'CR3BP y');
-        const vx = stateValue(state, 2, 'CR3BP vx');
-        const vy = stateValue(state, 3, 'CR3BP vy');
-        const r1 = Math.hypot(x + mu, y);
-        const r2 = Math.hypot(x - 1 + mu, y);
-        const potential = 0.5 * (x * x + y * y) + (1 - mu) / r1 + mu / r2;
-        return [x, y, vx, vy, 2 * potential - vx * vx - vy * vy];
-      });
-      return resultFromStates(
-        d,
-        solved.times,
-        states,
-        [
-          { id: 'x', label: 'Rotating x' },
-          { id: 'y', label: 'Rotating y' },
-          { id: 'vx', label: 'Velocity x' },
-          { id: 'vy', label: 'Velocity y' },
-          { id: 'jacobi', label: 'Jacobi integral' },
-        ],
-        [0, 1],
-        `Fixed-step RK4 of the rotating-frame CR3BP; segments entering the declared ${CR3BP_EXCLUSION_RADIUS} close-encounter radius are invalid.`,
-      );
-    }
     case 'n-body': {
       const thirdMass = p.mass ?? 0.6;
       const speed = p.velocity ?? 0.82;
@@ -775,6 +680,7 @@ function dispatchWork(work: WorkManifest, parameters: Record<string, number>): W
       result =
         simulateReviewedFoundation(work, parameters) ??
         simulateReviewedCollective(work, parameters) ??
+        simulateReviewedCr3bp(work, parameters) ??
         odeWork(work, parameters);
       break;
     case 'analytic-v1':

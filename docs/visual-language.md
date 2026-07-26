@@ -29,11 +29,23 @@ the underlying value stays in Study and an overflow remains perceptible. A field
 current computed frame and declared component domain. A path projection names its state
 coordinates and aspect convention; high-dimensional state is not automatically turned into 3D.
 
+When reviewed regimes occupy materially different finite ranges, separate path layers may declare
+separate fixed domains and use `appliesToRegimeIds` to select exactly one scale. This is not a
+per-frame autoscale: each reviewed preset keeps a stable, inspectable domain. A custom-unreviewed
+run uses an explicitly identified fixed-scale fallback. If a path leaves that domain, the renderer
+breaks the SVG subpath and adds excursion markers plus a sample count; it never joins clamped
+samples into a false line along the frame boundary.
+
 `src/museum/semantic-visual.ts` is the shared numeric binding interpreter. It applies the declared
 linear, square-root, logarithmic, symmetric-log, or cyclic transform and reports whether the raw
 value lies outside the reviewed domain. Museum renderers use that result for mark geometry and an
 explicit overflow label / count; they do not substitute a per-frame autoscale. Categorical
 bindings are not passed through the numeric interpreter.
+
+Secondary time evidence uses aligned small multiples with a shared time cursor. Each row names its
+quantity and displays the finite-run numeric range used for that row. Independently normalized
+series are not overplotted into one ambiguous line field, and the range disclosure remains visible
+at narrow widths.
 
 An `event-frequency` channel is special because event order is stateful. Its binding must declare
 a positive `eventQuantum` and an `eventAccumulatorRef`. The kernel integrates the cumulative
