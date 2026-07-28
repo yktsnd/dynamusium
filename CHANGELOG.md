@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-28
+
+A scientific-integrity release. Every source link now opens the work it
+names, and the two conservative works hold their invariant.
+
 ### Fixed
 
 - Corrected five source links that did not open the work they named. Three
@@ -109,6 +114,7 @@ permanent collection rather than a single demonstration model.
   diagnostics instead of being clamped away.
 - Project documentation and continuous integration setup.
 
-[Unreleased]: https://github.com/yktsnd/dynamusium/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/yktsnd/dynamusium/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/yktsnd/dynamusium/releases/tag/v1.1.0
 [1.0.0]: https://github.com/yktsnd/dynamusium/releases/tag/v1.0.0
 [0.1.0]: https://github.com/yktsnd/dynamusium/releases/tag/v0.1.0
