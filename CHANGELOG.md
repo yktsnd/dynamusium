@@ -7,14 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-28
+
+The museum relaunch. This release supersedes the earlier single-instrument
+0.1.0 release: the project is reintroduced end to end as DynaMusium, a
+permanent collection rather than a single demonstration model.
+
 ### Added
 
-- Reintroduced the project as **DynaMusium — Museum of Dynamic Systems** with
-  thirty sourced interactive works across five scientific galleries.
-- Added Observe, Study, and Exhibit modes, synchronized accessible data tables,
-  deterministic ODE/discrete/field/analytic runtimes, and shareable work URLs.
-- Added a machine-readable work schema and `work:new` / `work:validate` authoring
-  commands for human and agent contributors.
+- Reintroduced the project as **DynaMusium — Museum of Dynamic Systems**, a
+  permanent collection of thirty sourced interactive works across five
+  scientific galleries.
+- Added Observe, Study, and Exhibit modes, synchronized accessible data
+  tables, deterministic ODE/discrete/field/analytic runtimes, and shareable
+  work URLs.
+- Established the Dynamical Portrait contract that every work follows:
+  a numerical kernel produces a typed result with provenance, analyzers
+  derive evidence-backed scientific objects from that result, immutable
+  reviewed semantic visual mappings bind those objects to marks and
+  channels, and composition arranges the mapped layers without altering
+  their scientific meaning.
+- Added the version-2 work manifest schema and the `work:new` /
+  `work:validate` authoring commands, giving human and agent contributors a
+  scaffold-to-validation path for new works.
 - Exhibition (kiosk) mode: a fullscreen presentation mode (toggle button,
   "e" key, or `?exhibit=1` URL param) that auto-advances through presets by
   calling the same preset-selection action a user click would, with a
@@ -54,5 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   diagnostics instead of being clamped away.
 - Project documentation and continuous integration setup.
 
-[Unreleased]: https://github.com/yktsnd/dynamusium/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/yktsnd/dynamusium/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/yktsnd/dynamusium/releases/tag/v1.0.0
 [0.1.0]: https://github.com/yktsnd/dynamusium/releases/tag/v0.1.0

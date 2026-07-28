@@ -9,8 +9,9 @@ reaction-network runtime. Museum-wide result, evidence, and mapping contracts ar
 
 ## Context
 
-KinetiFlux's numerical results (species quantities, cumulative output,
-process rates) must be trustworthy independent of how they happen to be
+The original KinetiFlux instrument's numerical results (species quantities,
+cumulative output, process rates) — now the preserved reaction-network room
+within DynaMusium — must be trustworthy independent of how they happen to be
 drawn. If UI components were allowed to compute or adjust derived numbers —
 even something as small as a smoothed rate or a re-derived total — the app
 would have more than one source of numerical truth, and a rendering bug

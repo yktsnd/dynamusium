@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: 'If you use this software, please cite it as below.'
+title: 'DynaMusium — Museum of Dynamic Systems'
+type: software
+authors:
+  - name: 'yktsnd'
+    alias: yktsnd
+repository-code: 'https://github.com/yktsnd/dynamusium'
+url: 'https://yktsnd.github.io/dynamusium/'
+license: MIT
+version: 1.0.0
+date-released: '2026-07-28'
+abstract: >
+  DynaMusium is an in-browser museum of thirty sourced, deterministic
+  interactive works spanning dynamical systems across the sciences. Each
+  work follows a Dynamical Portrait contract from a numerical kernel through
+  provenance-carrying results, evidence-backed analyzers, and reviewed
+  semantic visual mappings, so every image can be traced back to a
+  reproducible calculation. Observe, Study, and Exhibit modes, together with
+  accessible data tables, let visitors move between direct observation and
+  underlying evidence with an explicit evidence-qualification scheme.
+keywords:
+  - dynamical-systems
+  - scientific-visualization
+  - interactive-simulation
+  - numerical-methods
+  - science-communication
+  - open-educational-resources

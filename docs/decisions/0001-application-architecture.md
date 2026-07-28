@@ -9,12 +9,13 @@ work use Zustand, precomputed RK4, or SVG.
 
 ## Context
 
-KinetiFlux animates the solution of a deterministic ODE system and lets a
-user scrub through it, change parameters, and switch presets, all while
-keeping the network view and two charts in sync. Three foundational
-decisions shape everything else in the codebase: how the simulation itself
-is computed and consumed, how application state is stored, and how the
-network/charts are drawn.
+The original KinetiFlux instrument — now the preserved reaction-network room
+within DynaMusium — animates the solution of a deterministic ODE system and
+lets a user scrub through it, change parameters, and switch presets, all
+while keeping the network view and two charts in sync. Three foundational
+decisions shape everything else in that runtime's code: how the simulation
+itself is computed and consumed, how application state is stored, and how
+the network/charts are drawn.
 
 ## Decision
 
