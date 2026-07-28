@@ -1,7 +1,6 @@
 <div align="center">
-  <img src="docs/media/mark.svg" width="72" alt="DynaMusium mark" />
 
-# DynaMusium
+![The DynaMusium wordmark beside a glowing Lorenz attractor suspended in a dark museum hall opening onto a starlit sea](public/og-dynamusium.png)
 
 **Museum of Dynamic Systems**
 
@@ -9,6 +8,8 @@ Thirty interactive mathematical models across motion, matter, life, Earth, and t
 
 **[Open the live museum →](https://yktsnd.github.io/dynamusium/)**
 </div>
+
+The banner above is brand art, not a screenshot — the museum itself looks like this:
 
 ![The Lorenz Atmosphere work in Observe mode: a glowing butterfly-shaped attractor traced mid-flight, with synchronized x/y/z traces below and thermal-forcing and Prandtl-number sliders at the bottom](docs/media/hero.png)
 
