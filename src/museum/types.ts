@@ -21,6 +21,14 @@ export interface WorkParameter {
   max: number;
   step: number;
   default: number;
+  /**
+   * The physical or model unit this parameter is measured in, e.g. 'm/s²',
+   * 'rad', 'dimensionless', or 'model unit' for a nondimensionalized or
+   * uncalibrated kernel quantity. Optional so community v1/v2 manifests
+   * written before this field existed still validate; new works should
+   * always declare one (see CONTRIBUTING_WORKS.md).
+   */
+  unit?: string;
 }
 
 export interface WorkPreset {

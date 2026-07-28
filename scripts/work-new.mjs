@@ -52,7 +52,16 @@ const manifest = {
   equation: law,
   duration: 30,
   parameters: [
-    { id: 'control', label: 'Control', symbol: 'p', min: 0, max: 2, step: 0.01, default: 1 },
+    {
+      id: 'control',
+      label: 'Control',
+      symbol: 'p',
+      min: 0,
+      max: 2,
+      step: 0.01,
+      default: 1,
+      unit: 'model unit',
+    },
     {
       id: 'initial',
       label: 'Initial state',
@@ -61,6 +70,7 @@ const manifest = {
       max: 1,
       step: 0.01,
       default: 0.2,
+      unit: 'model unit',
     },
   ],
   presets: [

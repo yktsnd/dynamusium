@@ -1,0 +1,298 @@
+{
+  "verifiedAt": "2026-07-28",
+  "entries": [
+    {
+      "slug": "double-pendulum",
+      "url": "https://doi.org/10.1016/j.chaos.2005.08.032",
+      "label": "Stachowiak & Okada, A numerical analysis of chaos in the double pendulum",
+      "resolution": "crossref",
+      "resolvedTitle": "A numerical analysis of chaos in the double pendulum",
+      "resolvedAuthors": ["Stachowiak", "Okada"],
+      "resolvedYear": 2006,
+      "resolvedContainer": "Chaos, Solitons &amp; Fractals"
+    },
+    {
+      "slug": "kuramoto-oscillators",
+      "url": "https://doi.org/10.1007/BFb0013365",
+      "label": "Kuramoto, Self-entrainment of a population of coupled non-linear oscillators",
+      "resolution": "crossref",
+      "resolvedTitle": "Self-entrainment of a population of coupled non-linear oscillators",
+      "resolvedAuthors": ["Kuramoto"],
+      "resolvedYear": null,
+      "resolvedContainer": "Lecture Notes in Physics"
+    },
+    {
+      "slug": "fput-chain",
+      "url": "https://doi.org/10.2172/4376203",
+      "label": "Fermi, Pasta, Ulam & Tsingou, Studies of Nonlinear Problems (Los Alamos report LA-1940)",
+      "resolution": "crossref",
+      "resolvedTitle": "STUDIES OF THE NONLINEAR PROBLEMS",
+      "resolvedAuthors": ["Fermi", "Pasta", "Ulam", "Tsingou"],
+      "resolvedYear": 1955,
+      "resolvedContainer": ""
+    },
+    {
+      "slug": "logistic-map",
+      "url": "https://doi.org/10.1038/261459a0",
+      "label": "May, Simple mathematical models with very complicated dynamics",
+      "resolution": "crossref",
+      "resolvedTitle": "Simple mathematical models with very complicated dynamics",
+      "resolvedAuthors": ["May"],
+      "resolvedYear": 1976,
+      "resolvedContainer": "Nature"
+    },
+    {
+      "slug": "wave-equation",
+      "url": "https://epiphymaths.univ-fcomte.fr/1t1m/d_alembert-recherches_sur_la_courbe_que_forme_une_corde_tendue_mise_en_vibration-1747.pdf",
+      "label": "d'Alembert, Recherches sur la courbe que forme une corde tenduë mise en vibration",
+      "resolution": "manual"
+    },
+    {
+      "slug": "standard-map",
+      "url": "https://doi.org/10.1016/0370-1573(79)90023-1",
+      "label": "Chirikov, A universal instability of many-dimensional oscillator systems",
+      "resolution": "crossref",
+      "resolvedTitle": "A universal instability of many-dimensional oscillator systems",
+      "resolvedAuthors": ["Chirikov"],
+      "resolvedYear": 1979,
+      "resolvedContainer": "Physics Reports"
+    },
+    {
+      "slug": "fed-reaction-chain",
+      "url": "https://doi.org/10.1351/goldbook.08184",
+      "label": "IUPAC Gold Book, mass action, law of",
+      "resolution": "crossref",
+      "resolvedTitle": "mass action, law of",
+      "resolvedAuthors": [],
+      "resolvedYear": 2025,
+      "resolvedContainer": "The IUPAC Compendium of Chemical Terminology"
+    },
+    {
+      "slug": "gray-scott",
+      "url": "https://doi.org/10.1126/science.261.5118.189",
+      "label": "Pearson, Complex patterns in a simple system",
+      "resolution": "crossref",
+      "resolvedTitle": "Complex Patterns in a Simple System",
+      "resolvedAuthors": ["Pearson"],
+      "resolvedYear": 1993,
+      "resolvedContainer": "Science"
+    },
+    {
+      "slug": "heat-diffusion",
+      "url": "https://gallica.bnf.fr/ark:/12148/bpt6k1045508v",
+      "label": "Fourier, Théorie analytique de la chaleur",
+      "resolution": "manual"
+    },
+    {
+      "slug": "schrodinger-wave-packet",
+      "url": "https://doi.org/10.1002/andp.19263840404",
+      "label": "Schrödinger, Quantisierung als Eigenwertproblem",
+      "resolution": "crossref",
+      "resolvedTitle": "Quantisierung als Eigenwertproblem",
+      "resolvedAuthors": ["Schrödinger"],
+      "resolvedYear": 1926,
+      "resolvedContainer": "Annalen der Physik"
+    },
+    {
+      "slug": "ising-model",
+      "url": "https://doi.org/10.1007/BF02980577",
+      "label": "Ising, Beitrag zur Theorie des Ferromagnetismus",
+      "resolution": "crossref",
+      "resolvedTitle": "Beitrag zur Theorie des Ferromagnetismus",
+      "resolvedAuthors": ["Ising"],
+      "resolvedYear": 1925,
+      "resolvedContainer": "Zeitschrift für Physik"
+    },
+    {
+      "slug": "cahn-hilliard",
+      "url": "https://doi.org/10.1063/1.1744102",
+      "label": "Cahn & Hilliard, Free Energy of a Nonuniform System I",
+      "resolution": "crossref",
+      "resolvedTitle": "Free Energy of a Nonuniform System. I. Interfacial Free Energy",
+      "resolvedAuthors": ["Cahn", "Hilliard"],
+      "resolvedYear": 1958,
+      "resolvedContainer": "The Journal of Chemical Physics"
+    },
+    {
+      "slug": "lotka-volterra",
+      "url": "https://doi.org/10.1093/icesjms/3.1.3",
+      "label": "Volterra, Variations and Fluctuations of the Number of Individuals in Animal Species living together",
+      "resolution": "crossref",
+      "resolvedTitle": "Variations and Fluctuations of the Number of Individuals in Animal Species living together",
+      "resolvedAuthors": ["Volterra"],
+      "resolvedYear": 1928,
+      "resolvedContainer": "ICES Journal of Marine Science"
+    },
+    {
+      "slug": "brusselator",
+      "url": "https://doi.org/10.1063/1.1668896",
+      "label": "Prigogine & Lefever, Symmetry Breaking Instabilities in Dissipative Systems. II",
+      "resolution": "crossref",
+      "resolvedTitle": "Symmetry Breaking Instabilities in Dissipative Systems. II",
+      "resolvedAuthors": ["Prigogine", "Lefever"],
+      "resolvedYear": 1968,
+      "resolvedContainer": "The Journal of Chemical Physics"
+    },
+    {
+      "slug": "oregonator",
+      "url": "https://doi.org/10.1021/ja00780a001",
+      "label": "Field, Kőrös & Noyes, Oscillations in chemical systems II",
+      "resolution": "crossref",
+      "resolvedTitle": "Oscillations in chemical systems. II. Thorough analysis of temporal oscillation in the bromate-cerium-malonic acid system",
+      "resolvedAuthors": ["Field", "Koros", "Noyes"],
+      "resolvedYear": 1972,
+      "resolvedContainer": "Journal of the American Chemical Society"
+    },
+    {
+      "slug": "sir-epidemic",
+      "url": "https://doi.org/10.1098/rspa.1927.0118",
+      "label": "Kermack & McKendrick, A contribution to the mathematical theory of epidemics",
+      "resolution": "crossref",
+      "resolvedTitle": "A contribution to the mathematical theory of epidemics",
+      "resolvedAuthors": ["Kermack", "McKendrick"],
+      "resolvedYear": 1927,
+      "resolvedContainer": "Proceedings of the Royal Society of London. Series A, Containing Papers of a Mathematical and Physical Character"
+    },
+    {
+      "slug": "hodgkin-huxley",
+      "url": "https://doi.org/10.1113/jphysiol.1952.sp004764",
+      "label": "Hodgkin & Huxley, A quantitative description of membrane current",
+      "resolution": "crossref",
+      "resolvedTitle": "A quantitative description of membrane current and its application to conduction and excitation in nerve",
+      "resolvedAuthors": ["Hodgkin", "Huxley"],
+      "resolvedYear": 1952,
+      "resolvedContainer": "The Journal of Physiology"
+    },
+    {
+      "slug": "fitzhugh-nagumo",
+      "url": "https://doi.org/10.1016/S0006-3495(61)86902-6",
+      "label": "FitzHugh, Impulses and physiological states in theoretical models of nerve membrane",
+      "resolution": "crossref",
+      "resolvedTitle": "Impulses and Physiological States in Theoretical Models of Nerve Membrane",
+      "resolvedAuthors": ["FitzHugh"],
+      "resolvedYear": 1961,
+      "resolvedContainer": "Biophysical Journal"
+    },
+    {
+      "slug": "lorenz-atmosphere",
+      "url": "https://doi.org/10.1175/1520-0469(1963)020%3C0130:DNF%3E2.0.CO;2",
+      "label": "Lorenz, Deterministic Nonperiodic Flow",
+      "resolution": "crossref",
+      "resolvedTitle": "Deterministic Nonperiodic Flow",
+      "resolvedAuthors": ["Lorenz"],
+      "resolvedYear": 1963,
+      "resolvedContainer": "Journal of the Atmospheric Sciences"
+    },
+    {
+      "slug": "stommel-box",
+      "url": "https://doi.org/10.1111/j.2153-3490.1961.tb00079.x",
+      "label": "Stommel, Thermohaline convection with two stable regimes",
+      "resolution": "crossref",
+      "resolvedTitle": "Thermohaline Convection with Two Stable Regimes of Flow",
+      "resolvedAuthors": ["STOMMEL"],
+      "resolvedYear": 1961,
+      "resolvedContainer": "Tellus"
+    },
+    {
+      "slug": "daisyworld",
+      "url": "https://doi.org/10.1111/j.1600-0889.1983.tb00031.x",
+      "label": "Watson & Lovelock, Biological homeostasis of the global environment",
+      "resolution": "crossref",
+      "resolvedTitle": "Biological homeostasis of the global environment: the parable of Daisyworld",
+      "resolvedAuthors": ["WATSON", "LOVELOCK"],
+      "resolvedYear": 1983,
+      "resolvedContainer": "Tellus B"
+    },
+    {
+      "slug": "carbon-cycle",
+      "url": "https://doi.org/10.1111/j.2153-3490.1957.tb01849.x",
+      "label": "Revelle & Suess, Carbon dioxide exchange between atmosphere and ocean",
+      "resolution": "crossref",
+      "resolvedTitle": "Carbon Dioxide Exchange Between Atmosphere and Ocean and the Question of an Increase of Atmospheric CO\n                    <sub>2</sub>\n                    during the Past Decades",
+      "resolvedAuthors": ["REVELLE", "SUESS"],
+      "resolvedYear": 1957,
+      "resolvedContainer": "Tellus"
+    },
+    {
+      "slug": "shallow-water",
+      "url": "https://doi.org/10.1017/9781107588417",
+      "label": "Vallis, Atmospheric and Oceanic Fluid Dynamics",
+      "resolution": "crossref",
+      "resolvedTitle": "Atmospheric and Oceanic Fluid Dynamics",
+      "resolvedAuthors": ["Vallis"],
+      "resolvedYear": 2017,
+      "resolvedContainer": ""
+    },
+    {
+      "slug": "budyko-sellers",
+      "url": "https://doi.org/10.1111/j.2153-3490.1969.tb00466.x",
+      "label": "Budyko, The effect of solar radiation variations on the climate of the Earth",
+      "resolution": "crossref",
+      "resolvedTitle": "The effect of solar radiation variations on the climate of the Earth",
+      "resolvedAuthors": ["BUDYKO"],
+      "resolvedYear": 1969,
+      "resolvedContainer": "Tellus"
+    },
+    {
+      "slug": "restricted-three-body",
+      "url": "https://doi.org/10.1016/B978-0-12-395732-0.X5001-6",
+      "label": "Szebehely, Theory of Orbits: The Restricted Problem of Three Bodies",
+      "resolution": "crossref",
+      "resolvedTitle": "Theory of Orbit",
+      "resolvedAuthors": [],
+      "resolvedYear": 1967,
+      "resolvedContainer": "",
+      "note": "Elsevier registers this book as \"Theory of Orbit\" with no author. The record is ISBN 9780123957320, Elsevier, 1967, which is Szebehely, Theory of Orbits: The Restricted Problem of Three Bodies -- the publisher's title string is truncated, the link is correct. Verified by hand 2026-07-28."
+    },
+    {
+      "slug": "kepler-orbit",
+      "url": "https://doi.org/10.5479/sil.126675.39088002685477",
+      "label": "Kepler, Astronomia Nova",
+      "resolution": "crossref",
+      "resolvedTitle": "Astronomia nova aitiologetos [romanized]",
+      "resolvedAuthors": ["Kepler"],
+      "resolvedYear": 1609,
+      "resolvedContainer": ""
+    },
+    {
+      "slug": "hohmann-transfer",
+      "url": "https://doi.org/10.1515/9783486751406",
+      "label": "Hohmann, Die Erreichbarkeit der Himmelskörper",
+      "resolution": "crossref",
+      "resolvedTitle": "Die Erreichbarkeit der Himmelskörper",
+      "resolvedAuthors": ["Hohmann"],
+      "resolvedYear": 1925,
+      "resolvedContainer": ""
+    },
+    {
+      "slug": "n-body-system",
+      "url": "https://doi.org/10.5479/sil.52126.39088015628399",
+      "label": "Newton, Philosophiae Naturalis Principia Mathematica",
+      "resolution": "crossref",
+      "resolvedTitle": "Philosophiae naturalis principia mathematica",
+      "resolvedAuthors": ["Newton"],
+      "resolvedYear": 1687,
+      "resolvedContainer": ""
+    },
+    {
+      "slug": "friedmann-lemaitre",
+      "url": "https://doi.org/10.1093/mnras/91.5.483",
+      "label": "Lemaître, A Homogeneous Universe of Constant Mass and Increasing Radius accounting for the Radial Velocity of Extra-galactic Nebulae",
+      "resolution": "crossref",
+      "resolvedTitle": "A Homogeneous Universe of Constant Mass and Increasing Radius accounting for the Radial Velocity of Extra-galactic Nebulae",
+      "resolvedAuthors": ["Lematre"],
+      "resolvedYear": 1931,
+      "resolvedContainer": "Monthly Notices of the Royal Astronomical Society"
+    },
+    {
+      "slug": "exoplanet-transit",
+      "url": "https://doi.org/10.1086/312457",
+      "label": "Charbonneau et al., Detection of Planetary Transits Across a Sun-like Star",
+      "resolution": "crossref",
+      "resolvedTitle": "Detection of Planetary Transits Across a Sun-like Star",
+      "resolvedAuthors": ["Charbonneau", "Brown", "Latham", "Mayor"],
+      "resolvedYear": 2000,
+      "resolvedContainer": "The Astrophysical Journal"
+    }
+  ]
+}

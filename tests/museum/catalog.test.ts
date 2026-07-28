@@ -22,6 +22,22 @@ describe('DynaMusium catalog', () => {
     }
   });
 
+  it('declares a non-empty unit for every built-in work parameter', () => {
+    // catalog.ts assembles `works` as [...builtInWorks, ...communityWorks] and asserts
+    // builtInWorks.length === 30, so the first 30 entries are always the permanent
+    // built-in catalog regardless of how many community manifests are discovered.
+    const builtInWorks = works.slice(0, 30);
+    expect(builtInWorks).toHaveLength(30);
+    for (const work of builtInWorks) {
+      for (const parameter of work.parameters) {
+        expect(
+          typeof parameter.unit === 'string' && parameter.unit.trim().length > 0,
+          `${work.slug}/${parameter.id} is missing a declared unit`,
+        ).toBe(true);
+      }
+    }
+  });
+
   it('runs every canonical work deterministically without non-finite output', () => {
     for (const work of works) {
       const first = simulateWork(work, {});
