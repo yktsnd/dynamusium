@@ -79,6 +79,7 @@ turn "how much is flowing" into particle motion.
   it would violate the "deterministic inputs produce deterministic results"
   invariant for anything user-visible, make automated/visual testing of
   particle behavior unreliable, and be actively misleading since the
-  underlying model has no stochastic component at all (KinetiFlux is
-  explicitly deterministic — see `AGENTS.md`, "Deliberately not in this
-  version: stochastic simulation").
+  reaction-network model and solver have no stochastic component at all
+  (the original KinetiFlux instrument is explicitly deterministic — see
+  `AGENTS.md` numerical invariant #1, "no randomness anywhere in
+  model/solver").
