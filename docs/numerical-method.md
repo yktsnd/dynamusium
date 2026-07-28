@@ -31,6 +31,28 @@ This table describes implementation families, not universal recommendations. In 
 fixed-step RK4 is not silently reused for stiff kinetics, Hamiltonian long-time structure,
 Markov sampling, or arbitrary PDEs.
 
+### Step size is separate from frame count
+
+`rk4` (`src/museum/simulation.ts`) takes a `substeps` argument: the number of
+integration steps taken per recorded frame. Frame count is a presentation
+choice — how densely a trajectory is sampled for drawing and scrubbing —
+while step size is what governs truncation error. Tying the two together
+forces a system that needs a fine step to either store a needlessly large
+trajectory or accumulate error it cannot report.
+
+This matters most for the conservative works, because RK4 is not symplectic
+and its truncation error appears on screen as energy the system never had.
+The Double Pendulum and the three-body system both previously integrated at
+one step per frame, and drifted by up to 53% and 165% in total energy
+respectively over a run — for chaotic systems, motion that came from the step
+size rather than the law. They now take 16 and 24 substeps per frame, holding
+drift below `1e-4` relative across their full parameter ranges.
+
+A work that conserves a quantity must keep that quantity to a stated
+tolerance over its whole run and parameter range, and
+`tests/museum/conservation.test.ts` must measure it from real kernel output
+rather than assert it.
+
 ## Common valid / invalid policy
 
 Before a museum result can be displayed, the runtime and execution boundary check:
