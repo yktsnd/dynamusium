@@ -75,37 +75,56 @@ export function rk4(
   derivative: Derivative,
   steps = 720,
   stepConstraint?: StepConstraint,
+  /**
+   * Internal RK4 steps taken per recorded frame.
+   *
+   * Frame count is a presentation choice -- how densely the trajectory is
+   * sampled for drawing and scrubbing -- while step size is what governs
+   * truncation error. Tying the two together forces a system that needs a
+   * fine step to either store a needlessly huge trajectory or accumulate
+   * error it cannot report. Substepping separates them: the caller keeps
+   * the frame count it wants to display and raises this until the error is
+   * acceptable for the physics.
+   */
+  substeps = 1,
 ) {
   assertFiniteNumber(duration, 'RK4 duration');
   if (duration <= 0) throw new Error(`RK4 duration must be positive; received ${duration}.`);
   if (!Number.isInteger(steps) || steps <= 0) {
     throw new Error(`RK4 steps must be a positive integer; received ${steps}.`);
   }
+  if (!Number.isInteger(substeps) || substeps <= 0) {
+    throw new Error(`RK4 substeps must be a positive integer; received ${substeps}.`);
+  }
   if (initial.length === 0) throw new Error('RK4 initial state must not be empty.');
   assertFiniteVector(initial, initial.length, 'RK4 initial state');
 
   const dt = duration / steps;
-  assertFiniteNumber(dt, 'RK4 step size');
+  const h = dt / substeps;
+  assertFiniteNumber(h, 'RK4 step size');
   const states: number[][] = [initial.slice()];
   const times = [0];
   let state = initial.slice();
   for (let step = 1; step <= steps; step += 1) {
-    const time = (step - 1) * dt;
-    const prefix = `RK4 step ${step} at t=${time}`;
-    const k1 = derivativeAt(derivative, time, state, initial.length, `${prefix} k1`);
-    const k2State = stageState(state, k1, dt / 2, `${prefix} k2 stage`);
-    const k2 = derivativeAt(derivative, time + dt / 2, k2State, initial.length, `${prefix} k2`);
-    const k3State = stageState(state, k2, dt / 2, `${prefix} k3 stage`);
-    const k3 = derivativeAt(derivative, time + dt / 2, k3State, initial.length, `${prefix} k3`);
-    const k4State = stageState(state, k3, dt, `${prefix} k4 stage`);
-    const k4 = derivativeAt(derivative, time + dt, k4State, initial.length, `${prefix} k4`);
-    const next = state.map(
-      (value, index) => value + (dt / 6) * (k1[index] + 2 * k2[index] + 2 * k3[index] + k4[index]),
-    );
-    assertFiniteVector(next, initial.length, `${prefix} final state`);
+    const frameStart = state;
+    for (let substep = 0; substep < substeps; substep += 1) {
+      const time = (step - 1) * dt + substep * h;
+      const prefix = `RK4 step ${step} at t=${time}`;
+      const k1 = derivativeAt(derivative, time, state, initial.length, `${prefix} k1`);
+      const k2State = stageState(state, k1, h / 2, `${prefix} k2 stage`);
+      const k2 = derivativeAt(derivative, time + h / 2, k2State, initial.length, `${prefix} k2`);
+      const k3State = stageState(state, k2, h / 2, `${prefix} k3 stage`);
+      const k3 = derivativeAt(derivative, time + h / 2, k3State, initial.length, `${prefix} k3`);
+      const k4State = stageState(state, k3, h, `${prefix} k4 stage`);
+      const k4 = derivativeAt(derivative, time + h, k4State, initial.length, `${prefix} k4`);
+      const next = state.map(
+        (value, index) => value + (h / 6) * (k1[index] + 2 * k2[index] + 2 * k3[index] + k4[index]),
+      );
+      assertFiniteVector(next, initial.length, `${prefix} final state`);
+      state = next;
+    }
     const nextTime = step * dt;
-    stepConstraint?.(state, next, step, nextTime);
-    state = next;
+    stepConstraint?.(frameStart, state, step, nextTime);
     states.push(state);
     times.push(nextTime);
   }
@@ -208,6 +227,15 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
           return [wa, wb, aa, ab];
         },
         1100,
+        undefined,
+        // The double pendulum is conservative, but RK4 is not symplectic, so
+        // its truncation error shows up directly as energy the system never
+        // had. At one step per frame the total energy wanders by ~5% at the
+        // default release and ~53% near the threshold preset -- a visitor
+        // would be watching a trajectory that is no longer this system's.
+        // Sixteen substeps put the drift below 1e-3 % across the whole
+        // parameter range; see tests/museum/conservation.test.ts.
+        16,
       );
       const stateAndTip = solved.states.map((state, stateIndex) => {
         const theta1 = stateValue(state, 0, `Double pendulum state ${stateIndex}`);
@@ -498,6 +526,15 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
           return [...state.slice(6), ...acceleration];
         },
         1200,
+        undefined,
+        // Softened Newtonian gravity conserves energy exactly; RK4 does not.
+        // At one step per frame the total energy of this configuration grew
+        // by 72% at the default release and 165% near the threshold preset,
+        // which for a chaotic three-body system means the orbits on screen
+        // were an artifact of the integrator rather than the law. Twenty-four
+        // substeps hold the drift near machine precision over the run; see
+        // tests/museum/conservation.test.ts.
+        24,
       );
       return resultFromStates(
         d,
@@ -518,7 +555,7 @@ function odeWork(work: WorkManifest, p: Record<string, number>): WorkResult | nu
           'Body C vy',
         ],
         [0, 1],
-        `Fixed-step RK4 of a planar three-body model with declared Plummer softening length ${softening}.`,
+        `Fixed-step RK4 of a planar three-body model with declared Plummer softening length ${softening}, taking 24 integration steps per recorded frame to hold total energy to within 1e-4 relative over the run.`,
       );
     }
     case 'friedmann': {

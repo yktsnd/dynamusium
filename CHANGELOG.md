@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Corrected five source links that did not open the work they named. Three
+  DOIs resolved to entirely unrelated papers (Double Pendulum, Standard Map,
+  Brusselator), one link was a dead NTRS record (Hohmann Transfer), and one
+  pointed at Lemaître's 1927 French original while displaying the title of
+  the 1931 English translation (Friedmann–Lemaître). Lotka–Volterra named a
+  different Volterra paper than the one it linked to.
+- Held total energy in the two conservative works that were visibly not
+  conserving it. Integrated at one RK4 step per displayed frame, the Double
+  Pendulum's energy wandered by up to 53% and the three-body system's grew
+  by up to 165% over a run — motion a visitor would read as physics but that
+  came from the integrator. Both now substep, holding the drift below 1e-4
+  relative across their whole parameter range.
+- Corrected the Lotka–Volterra equation card, which displayed coefficients
+  0.5 and 0.8 while the kernel integrated 0.45 and 0.9.
+- Corrected the Friedmann–Lemaître equation and slider, which labelled the
+  matter term with Ωᵣ, the standard symbol for radiation density.
+- Corrected two bylines that asserted more than the museum could support:
+  the Double Pendulum's uncorroborated "1746 · Daniel Bernoulli", and
+  FitzHugh–Nagumo's single 1961 date, which implied Nagumo co-authored
+  FitzHugh's solo paper rather than publishing separately in 1962.
+- Credited Mary Tsingou on the FPUT Chain, whose citation previously named
+  only the report number.
+
+### Added
+
+- `npm run cite:verify`: resolves every catalog DOI through CrossRef and
+  compares the publisher's registered title against the displayed one,
+  maintaining a verification ledger that offline tests assert against, so a
+  citation cannot be changed without being re-verified.
+- Conservation tests that measure invariants from real kernel output across
+  each work's full parameter range.
+
 ## [1.0.0] - 2026-07-28
 
 The museum relaunch. This release supersedes the earlier single-instrument

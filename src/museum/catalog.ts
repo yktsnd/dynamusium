@@ -103,8 +103,13 @@ const builtInWorks: WorkManifestV2[] = [
     render: 'orbit',
     kernel: 'double-pendulum',
     tier: 'flagship',
-    year: '1746',
-    authors: ['Daniel Bernoulli'],
+    // The double pendulum is a classical system with no single agreed
+    // originating publication, and the "1746 / Daniel Bernoulli" byline this
+    // work previously carried could not be corroborated against any source.
+    // The byline now names the analysis actually cited below rather than
+    // asserting a provenance the museum cannot support.
+    year: '2006',
+    authors: ['Tomasz Stachowiak', 'Toshio Okada'],
     duration: 30,
     summary:
       'Two coupled arms turn a simple gravitational law into an exquisitely sensitive trajectory.',
@@ -118,7 +123,7 @@ const builtInWorks: WorkManifestV2[] = [
     threshold: { offset: 0.42 },
     citation: [
       'Stachowiak & Okada, A numerical analysis of chaos in the double pendulum',
-      'https://doi.org/10.1016/j.chaos.2006.03.056',
+      'https://doi.org/10.1016/j.chaos.2005.08.032',
     ],
   }),
   defineWork({
@@ -168,7 +173,10 @@ const builtInWorks: WorkManifestV2[] = [
     ],
     quiet: { alpha: 0.05 },
     threshold: { alpha: 0.65 },
-    citation: ['Los Alamos report LA-1940', 'https://doi.org/10.2172/4376203'],
+    citation: [
+      'Fermi, Pasta, Ulam & Tsingou, Studies of Nonlinear Problems (Los Alamos report LA-1940)',
+      'https://doi.org/10.2172/4376203',
+    ],
   }),
   defineWork({
     slug: 'logistic-map',
@@ -248,7 +256,7 @@ const builtInWorks: WorkManifestV2[] = [
     threshold: { kick: 0.9716 },
     citation: [
       'Chirikov, A universal instability of many-dimensional oscillator systems',
-      'https://doi.org/10.1016/0550-3213(79)90035-X',
+      'https://doi.org/10.1016/0370-1573(79)90023-1',
     ],
   }),
   defineWork({
@@ -421,7 +429,7 @@ const builtInWorks: WorkManifestV2[] = [
     duration: 36,
     summary: 'Predator and prey trace a closed exchange between abundance and scarcity.',
     question: 'How does each population become the other population’s delay?',
-    equation: 'ẋ=αx−βxy; ẏ=0.5xy−0.8y',
+    equation: 'ẋ=αx−βxy; ẏ=0.45xy−0.9y',
     parameters: [
       parameter('predation', 'Predation', 'β', 0.1, 2, 0.01, 0.7),
       parameter('recovery', 'Prey growth', 'α', 0.2, 2, 0.01, 1.1),
@@ -429,7 +437,7 @@ const builtInWorks: WorkManifestV2[] = [
     quiet: { predation: 0.25 },
     threshold: { predation: 1.45, recovery: 1.6 },
     citation: [
-      'Volterra, Fluctuations in the abundance of a species',
+      'Volterra, Variations and Fluctuations of the Number of Individuals in Animal Species living together',
       'https://doi.org/10.1093/icesjms/3.1.3',
     ],
   }),
@@ -455,8 +463,8 @@ const builtInWorks: WorkManifestV2[] = [
     quiet: { b: 1.5 },
     threshold: { b: 2.05 },
     citation: [
-      'Prigogine & Lefever, Symmetry breaking instabilities',
-      'https://doi.org/10.1063/1.1696890',
+      'Prigogine & Lefever, Symmetry Breaking Instabilities in Dissipative Systems. II',
+      'https://doi.org/10.1063/1.1668896',
     ],
   }),
   defineWork({
@@ -548,7 +556,11 @@ const builtInWorks: WorkManifestV2[] = [
     render: 'phase',
     kernel: 'fitzhugh-nagumo',
     tier: 'collection',
-    year: '1961',
+    // The model carries two names because it came from two papers a year
+    // apart: FitzHugh's 1961 reduction, cited below, and Nagumo, Arimoto &
+    // Yoshizawa's 1962 circuit realization. The range avoids implying
+    // Nagumo co-authored the 1961 paper.
+    year: '1961\u20131962',
     authors: ['Richard FitzHugh', 'Jin-ichi Nagumo'],
     duration: 36,
     summary:
@@ -749,7 +761,10 @@ const builtInWorks: WorkManifestV2[] = [
     ],
     quiet: { velocity: 0.35 },
     threshold: { velocity: 1.08 },
-    citation: ['Szebehely, Theory of Orbits', 'https://doi.org/10.1016/B978-0-12-395732-0.X5001-6'],
+    citation: [
+      'Szebehely, Theory of Orbits: The Restricted Problem of Three Bodies',
+      'https://doi.org/10.1016/B978-0-12-395732-0.X5001-6',
+    ],
   }),
   defineWork({
     slug: 'kepler-orbit',
@@ -797,7 +812,7 @@ const builtInWorks: WorkManifestV2[] = [
     threshold: { target: 4.8 },
     citation: [
       'Hohmann, Die Erreichbarkeit der Himmelskörper',
-      'https://ntrs.nasa.gov/citations/19900010455',
+      'https://doi.org/10.1515/9783486751406',
     ],
   }),
   defineWork({
@@ -842,7 +857,7 @@ const builtInWorks: WorkManifestV2[] = [
     summary:
       'Matter, curvature, and vacuum energy determine the expansion history of a homogeneous universe.',
     question: 'How does the inventory of the cosmos decide its geometry in time?',
-    equation: 'H²/H₀²=Ωᵣa⁻³+Ωₖa⁻²+ΩΛ',
+    equation: 'H²/H₀²=Ωₘa⁻³+Ωₖa⁻²+ΩΛ',
     parameters: [
       parameter('matter', 'Matter density', 'Ωᵣ', 0.05, 1.5, 0.01, 0.3),
       parameter('vacuum', 'Vacuum density', 'ΩΛ', 0, 1.5, 0.01, 0.7),
@@ -850,8 +865,8 @@ const builtInWorks: WorkManifestV2[] = [
     quiet: { matter: 1, vacuum: 0 },
     threshold: { matter: 0.08, vacuum: 1.15 },
     citation: [
-      'Lemaître, A homogeneous universe of constant mass and increasing radius',
-      'https://ui.adsabs.harvard.edu/abs/1927ASSB...47...49L',
+      'Lemaître, A Homogeneous Universe of Constant Mass and Increasing Radius accounting for the Radial Velocity of Extra-galactic Nebulae',
+      'https://doi.org/10.1093/mnras/91.5.483',
     ],
   }),
   defineWork({
