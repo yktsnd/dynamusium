@@ -71,7 +71,8 @@
           "min": { "type": "number" },
           "max": { "type": "number" },
           "step": { "type": "number", "exclusiveMinimum": 0 },
-          "default": { "type": "number" }
+          "default": { "type": "number" },
+          "unit": { "type": "string", "minLength": 1 }
         }
       }
     },

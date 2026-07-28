@@ -145,6 +145,15 @@ unsourced/generated placeholder works.
     described as invariance, a Koopman spectrum, or continuum topology
     (`tests/museum/analyzers.test.ts`, `tests/museum/continuation.test.ts`,
     `tests/museum/koopman-edmd.test.ts`, `tests/museum/topology-conley.test.ts`).
+13. Every built-in work's every parameter declares a non-empty `unit`
+    (`WorkParameter.unit` in `src/museum/types.ts`) so a visitor can tell
+    which sliders are physically dimensional, which are nondimensionalized
+    or in the kernel's own model units, and which are genuinely
+    dimensionless — never a bare number with no indication of scale. Use
+    `'dimensionless'` for a true ratio/count, `'model unit'` for a
+    nondimensionalized or uncalibrated kernel quantity, and a real physical
+    unit only where the kernel actually justifies it
+    (`tests/museum/catalog.test.ts`).
 
 These are encoded as tests in `tests/solver/`, `tests/state/`,
 `tests/visualization/`, `tests/museum/`, and `tests/works/`. A change that

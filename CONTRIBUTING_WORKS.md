@@ -33,6 +33,25 @@ reviewed maturity.
 validator during CLI validation and production discovery. In addition to the curatorial metadata,
 parameters, presets, equation, and citations, complete these sections.
 
+### Parameters
+
+Each entry in `parameters` (`WorkParameter` in `src/museum/types.ts`) needs `id`, `label`,
+`symbol`, `min`, `max`, `step`, `default`, and a `unit`. `unit` is schema-optional only so that
+manifests written before this field existed still validate — every new work must declare one, and
+`tests/museum/catalog.test.ts` enforces this for the built-in catalog. Read the kernel
+(`src/museum/runtimes/`, `src/museum/simulation.ts`) before choosing it:
+
+- Use the exact string `'dimensionless'` for a genuine ratio, fraction, or count (an eccentricity,
+  a mass ratio, a reduced/named dimensionless number, a mode index).
+- Use `'model unit'` (or a simple compound such as `'model unit / model time'`) when the kernel is
+  nondimensionalized or otherwise uncalibrated to a real physical scale — do not invent an SI unit
+  that the kernel does not justify.
+- Use a real physical unit (e.g. `'m/s²'`, `'W/m^2'`) only when the kernel's own equations,
+  constants, or declared component units actually justify it.
+
+Never guess: asserting a false physical unit is precisely the class of scientific error this
+project exists to prevent.
+
 ### Formal class and definition
 
 - `formal.character`: deterministic, stochastic, hybrid, or stochastic-hybrid.

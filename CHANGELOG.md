@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   citation cannot be changed without being re-verified.
 - Conservation tests that measure invariants from real kernel output across
   each work's full parameter range.
+- A unit on every parameter of all thirty works, rendered as a quiet suffix
+  beside the value. Previously no slider declared one, so a visitor could not
+  tell whether "Gravity g = 9.81" meant m/s², a nondimensionalized quantity,
+  or an arbitrary number. Nondimensionalized and uncalibrated kernels say so
+  (`dimensionless`, `model unit`) rather than borrowing an SI unit their
+  equations do not support, and a test requires one on every new parameter.
 
 ## [1.0.0] - 2026-07-28
 

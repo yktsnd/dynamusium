@@ -1317,6 +1317,18 @@ function ParameterDrawer({
               {parameter.label}
               <i>
                 {parameter.symbol} = {value.toFixed(parameter.step < 0.01 ? 3 : 2)}
+                {parameter.unit !== undefined && (
+                  <span
+                    className={
+                      parameter.unit === 'dimensionless'
+                        ? 'parameter-unit is-dimensionless'
+                        : 'parameter-unit'
+                    }
+                  >
+                    {' '}
+                    {parameter.unit}
+                  </span>
+                )}
               </i>
             </span>
             <input

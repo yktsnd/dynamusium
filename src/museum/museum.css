@@ -1056,6 +1056,14 @@
   font: 500 9px/1 var(--font-mono);
   font-style: normal;
 }
+.parameter-drawer label i .parameter-unit {
+  color: inherit;
+  opacity: 0.7;
+}
+.parameter-drawer label i .parameter-unit.is-dimensionless {
+  opacity: 0.45;
+  font-style: italic;
+}
 .parameter-drawer input {
   width: 100%;
   min-height: 24px;
