@@ -12,9 +12,13 @@ deploy the site) rather than a runtime attack surface exposed to end users.
 
 | Version          | Supported |
 | ---------------- | --------- |
-| 0.1.x            | Yes       |
+| 1.0.x            | Yes       |
 | `main` (latest)  | Yes       |
-| Older than 0.1.x | No        |
+| Older than 1.0.x | No        |
+
+The 0.1.x line covered the earlier single-instrument release and is
+superseded by 1.0.0. Because the site is static and client-side, the
+practical remedy for any advisory is to redeploy from `main`.
 
 ## Reporting a Vulnerability
 
