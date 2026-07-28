@@ -6,7 +6,11 @@
 **Museum of Dynamic Systems**
 
 Thirty interactive mathematical models across motion, matter, life, Earth, and the cosmos.
+
+**[Open the live museum →](https://yktsnd.github.io/dynamusium/)**
 </div>
+
+![The Lorenz Atmosphere work in Observe mode: a glowing butterfly-shaped attractor traced mid-flight, with synchronized x/y/z traces below and thermal-forcing and Prandtl-number sliders at the bottom](docs/media/hero.png)
 
 DynaMusium treats a scientific model as a cultural object: something to observe, operate,
 question, source, and preserve. Every work is computed in the browser and connects its
@@ -33,6 +37,8 @@ if used by an individual contributor, can supply composition choices only; the s
 mappings remain owned and validated by DynaMusium.
 
 ## The collection
+
+![The collection view filtered to All, showing a grid of work cards including Double Pendulum, Kuramoto Oscillators, FPUT Chain, Logistic Map, Wave Equation, Standard Map, Fed Reaction Chain, Gray–Scott Pattern, and Heat / Diffusion, each with its runtime, target maturity, subtitle, and year/author](docs/media/collection.png)
 
 | Gallery          | Works                                                                                                |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
@@ -103,6 +109,13 @@ registries; manifest discovery never loads arbitrary code. See
   `work.schema.json` preserves strict version-1 compatibility.
 - `src/model/`, `src/solver/`, `src/state/` — the preserved, rigorously tested reaction-network core.
 
+![The Double Pendulum work in Study mode, scrolled to show a table of sampled arm-angle time-series values alongside the source citation Stachowiak & Okada, "A numerical analysis of chaos in the double pendulum"](docs/media/study.png)
+
+Study mode is where the evidence lives: the model's equation, its Dynamical Portrait maturity
+rating, numerical provenance (kernel, integrator, tolerances), the hard checks and claim
+assessments behind that rating, the visual-encoding bindings, a live sampled data table, and the
+source citation — all scrollable alongside the running artwork.
+
 Scientific time comes only from the computed samples. Exhibit pacing uses a separate
 wall-clock `presentationDuration`, so cinematic dwell never changes a physical frequency,
 decay rate, or flux. The visual atmosphere never encodes scientific values: data color,
@@ -110,7 +123,26 @@ position, trace, and motion derive from the run, while the cosmic/deep-ocean env
 a separate, decorative layer.
 
 The implementation retains the existing museum screen, quiet motion, deep-ink palette, and
-Observe / Study / Exhibit experience. See [the architecture](./docs/architecture.md),
+Observe / Study / Exhibit experience. In Exhibit mode the header, controls, and traces recede to
+near-invisible until hovered, leaving only the running artwork and its title on screen; the layout
+also collapses to a single column down to phone width.
+
+<table>
+<tr>
+<td width="65%">
+
+![The Kuramoto Oscillators work in Exhibit mode: header, mode switcher, and trace panel dimmed to near-invisible, leaving only the phase circle of twelve oscillators and the order-parameter vector visible against the starfield](docs/media/exhibit.png)
+
+</td>
+<td>
+
+![The DynaMusium entrance on a 390-pixel-wide mobile viewport, showing the stacked headline "Enter the living mathematics of nature", the intro copy, the Begin with Lorenz button, and the 30/05/06 stat row](docs/media/responsive.png)
+
+</td>
+</tr>
+</table>
+
+See [the architecture](./docs/architecture.md),
 [model contract](./docs/model-contract.md), [numerical policy](./docs/numerical-method.md), and
 [visual language](./docs/visual-language.md) for the enforceable boundaries. The
 [Dynamical Portrait foundation](./docs/dynamical-portrait-foundation.md) preserves the 1412542

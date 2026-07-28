@@ -1,11 +1,14 @@
 /**
- * Captures the README/docs screenshots from the real built app.
+ * Captures the README/docs screenshots from the real built museum app.
  *
  * Usage:
  *   npm run build && npm run preview &   # serves dist on :4173
  *   node scripts/capture-screens.mjs [outDir=docs/media]
  *
- * Screenshots are taken mid-playback so the network shows live dynamics.
+ * Each shot deep-links into a specific work/mode via the app's ?work=&mode=&preset=
+ * route (see src/museum/MuseumApp.tsx), waits for a real content selector, then lets
+ * playback develop for a few seconds so the network/trajectory shows live dynamics
+ * before the frame is captured.
  */
 import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
@@ -14,9 +17,64 @@ const BASE = process.env.CAPTURE_URL ?? 'http://localhost:4173';
 const OUT = process.argv[2] ?? 'docs/media';
 
 const shots = [
-  { name: 'hero', width: 1440, height: 900, settle: 6000, preset: 'steady-feed', dsf: 2 },
-  { name: 'wide', width: 1280, height: 800, settle: 12000, preset: 'tidal-feed', dsf: 2 },
-  { name: 'responsive', width: 390, height: 844, settle: 6000, preset: 'steady-feed', dsf: 1 },
+  {
+    // The most beautiful, self-explanatory museum screen: a flagship work,
+    // mid-observation, with the trajectory already tracing its attractor.
+    name: 'hero',
+    path: '/?work=lorenz-atmosphere&mode=observe&preset=canonical',
+    width: 1440,
+    height: 900,
+    dsf: 2,
+    selector: '.trajectory-line',
+    settle: 12000,
+  },
+  {
+    // The collection/gallery browse view, scrolled to the permanent-collection
+    // grid so the breadth of the thirty works is visible at once.
+    name: 'collection',
+    path: '/#collection',
+    width: 1440,
+    height: 900,
+    dsf: 2,
+    selector: '.collection-grid',
+    settle: 1500,
+    scrollToSelector: '.collection-wing',
+  },
+  {
+    // Study mode: the study panel is independently scrollable and taller
+    // than the viewport, so scroll it to the bottom to bring the live data
+    // table and source citations into frame together (the scientific
+    // credibility shot).
+    name: 'study',
+    path: '/?work=double-pendulum&mode=study&preset=canonical',
+    width: 1440,
+    height: 900,
+    dsf: 2,
+    selector: '.study-panel table',
+    settle: 5000,
+    scrollPanelSelector: '.study-panel',
+  },
+  {
+    // Exhibit/kiosk mode: chrome recedes to near-invisible, leaving the
+    // artwork alone (see .mode-exhibit rules in museum.css).
+    name: 'exhibit',
+    path: '/?work=kuramoto-oscillators&mode=exhibit&preset=canonical',
+    width: 1440,
+    height: 900,
+    dsf: 2,
+    selector: '.phase-oscillator',
+    settle: 6000,
+  },
+  {
+    // Mobile entrance.
+    name: 'responsive',
+    path: '/',
+    width: 390,
+    height: 844,
+    dsf: 1,
+    selector: '.entrance-hero',
+    settle: 1500,
+  },
 ];
 
 await mkdir(OUT, { recursive: true });
@@ -32,12 +90,22 @@ for (const shot of shots) {
     viewport: { width: shot.width, height: shot.height },
     deviceScaleFactor: shot.dsf ?? 2,
   });
-  await page.goto(BASE);
-  await page.waitForSelector('.network');
-  if (shot.preset) {
-    await page.getByTestId(`preset-${shot.preset}`).click();
+  await page.goto(`${BASE}${shot.path}`);
+  await page.waitForSelector(shot.selector, { state: 'visible' });
+  if (shot.scrollToSelector) {
+    await page.evaluate((sel) => {
+      document.querySelector(sel)?.scrollIntoView({ block: 'start' });
+    }, shot.scrollToSelector);
   }
-  // Let playback develop visible dynamics before capturing.
+  if (shot.scrollPanelSelector) {
+    // Scroll an independently-scrolling panel (e.g. the study panel) to its
+    // bottom so trailing content like citations is in frame.
+    await page.evaluate((sel) => {
+      const panel = document.querySelector(sel);
+      if (panel) panel.scrollTop = panel.scrollHeight;
+    }, shot.scrollPanelSelector);
+  }
+  // Let playback/render develop before capturing so the frame is never blank.
   await page.waitForTimeout(shot.settle);
   await page.screenshot({ path: `${OUT}/${shot.name}.png` });
   console.log(`captured ${OUT}/${shot.name}.png (${shot.width}x${shot.height})`);
