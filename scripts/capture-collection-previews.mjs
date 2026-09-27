@@ -114,7 +114,18 @@ function fieldArtwork(work, result, { requireVisualBinding, encodeNumericValue }
   return `<image x="105" y="98" width="990" height="430" preserveAspectRatio="xMidYMid meet" image-rendering="pixelated" href="data:image/png;base64,${image}"/>`;
 }
 
-function pathArtwork(work, result, semantic, { visualLayers, numericDomain, encodeNumericValue }) {
+function pathArtwork(
+  work,
+  result,
+  semantic,
+  {
+    visualLayers,
+    numericDomain,
+    encodeNumericValue,
+    decimateTrajectoryPoints,
+    visibleTrajectoryPath,
+  },
+) {
   const layers = visualLayers(work).filter(
     (layer) =>
       layer.mark === 'path' &&
@@ -139,16 +150,20 @@ function pathArtwork(work, result, semantic, { visualLayers, numericDomain, enco
   const height = scale === null ? chartBox.height : ySpan * scale;
   const left = chartBox.x + (chartBox.width - width) / 2;
   const top = chartBox.y + (chartBox.height - height) / 2;
-  const stride = Math.max(1, Math.ceil(xSeries.values.length / 1600));
-  let path = '';
-  for (let index = 0; index < xSeries.values.length; index += stride) {
-    const x = xSeries.values[index];
+  const screenPoints = xSeries.values.flatMap((x, index) => {
     const y = ySeries.values[index];
-    if (x === undefined || y === undefined) continue;
-    const px = left + encodeNumericValue(x, xBinding).normalized * width;
-    const py = top + (1 - encodeNumericValue(y, yBinding).normalized) * height;
-    path += `${path ? 'L' : 'M'}${point(px, py)}`;
-  }
+    if (x === undefined || y === undefined) return [];
+    const encodedX = encodeNumericValue(x, xBinding);
+    const encodedY = encodeNumericValue(y, yBinding);
+    return [
+      {
+        x: left + encodedX.normalized * width,
+        y: top + (1 - encodedY.normalized) * height,
+        outsideDomain: encodedX.outsideDomain || encodedY.outsideDomain,
+      },
+    ];
+  });
+  const path = visibleTrajectoryPath(decimateTrajectoryPoints(screenPoints, 1600));
   return `<rect x="${left.toFixed(2)}" y="${top.toFixed(2)}" width="${width.toFixed(2)}" height="${height.toFixed(2)}" fill="#081522" fill-opacity=".24" stroke="#b6eafa" stroke-opacity=".12"/><path d="${path}" fill="none" stroke="${semantic.accent}" stroke-width="13" stroke-opacity=".18" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/><path d="${path}" fill="none" stroke="url(#trace)" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
@@ -161,7 +176,12 @@ function valueAt(result, id, index) {
   return series?.values[index];
 }
 
-function oscillatorArtwork(work, result, semantic, { encodeNumericValue, findVisualBinding }) {
+function oscillatorArtwork(
+  work,
+  result,
+  semantic,
+  { encodeNumericValue, findVisualBinding, normalizedZero, signedFromBaseline },
+) {
   const state = result.numerical?.state;
   if (!state || state.shape[1] !== 12)
     throw new Error(`${work.slug}: oscillator state is missing.`);
@@ -200,12 +220,14 @@ function oscillatorArtwork(work, result, semantic, { encodeNumericValue, findVis
   ) {
     throw new Error(`${work.slug}: order-vector mapping is incomplete.`);
   }
-  const normX =
-    encodeNumericValue(orderX, xBinding).normalized -
-    normalizedBaseline(xBinding, encodeNumericValue);
-  const normY =
-    encodeNumericValue(orderY, yBinding).normalized -
-    normalizedBaseline(yBinding, encodeNumericValue);
+  const normX = signedFromBaseline(
+    encodeNumericValue(orderX, xBinding).normalized,
+    normalizedZero(xBinding) ?? 0.5,
+  );
+  const normY = signedFromBaseline(
+    encodeNumericValue(orderY, yBinding).normalized,
+    normalizedZero(yBinding) ?? 0.5,
+  );
   const cNorm = encodeNumericValue(coherence, cBinding).normalized;
   return `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#86d9eb" stroke-opacity=".27" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="${Math.sqrt(Math.max(0, cNorm)) * 75}" fill="${semantic.accent}" fill-opacity=".12" stroke="${semantic.accent}" stroke-opacity=".3"/>${dots}<line x1="${cx}" y1="${cy}" x2="${(cx + radius * normX).toFixed(2)}" y2="${(cy - radius * normY).toFixed(2)}" stroke="#f5e4bb" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="4" fill="#f5e4bb"/><text x="600" y="321" text-anchor="middle" class="metric">R = ${coherence.toFixed(3)}</text>`;
 }
@@ -286,10 +308,11 @@ const server = await createServer({
   logLevel: 'error',
 });
 try {
-  const [{ works }, { simulateWork }, semantic] = await Promise.all([
+  const [{ works }, { simulateWork }, semantic, trajectory] = await Promise.all([
     server.ssrLoadModule('/src/museum/catalog.ts'),
     server.ssrLoadModule('/src/museum/simulation.ts'),
     server.ssrLoadModule('/src/museum/semantic-visual.ts'),
+    server.ssrLoadModule('/src/museum/trajectory-path.ts'),
   ]);
   for (const work of works) {
     const result = simulateWork(work, {});
@@ -299,7 +322,7 @@ try {
       work,
       result,
       { accent, gallery: work.gallery.replaceAll('-', ' ') },
-      semantic,
+      { ...semantic, ...trajectory },
     );
     await writeFile(join(STAGE, `${work.slug}.svg`), svg);
     console.log(`captured ${OUT}/${work.slug}.svg`);

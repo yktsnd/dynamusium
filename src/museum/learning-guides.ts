@@ -77,7 +77,7 @@ export const learningGuides: Record<string, WorkLearningGuide> = {
     experiment: 'Compare narrow and broad initial packets. Watch how their spatial widths change.',
     connect:
       'The wavefunction carries phase and amplitude; its squared magnitude gives the displayed probability density.',
-    presets: { quiet: 'Narrow packet', threshold: 'Broad packet' },
+    presets: { quiet: 'Broad packet', threshold: 'Narrow packet' },
   },
   'ising-model': {
     observe: 'Look for clusters of aligned spins and the moment when large domains appear.',
@@ -85,7 +85,7 @@ export const learningGuides: Record<string, WorkLearningGuide> = {
       'Compare low temperature with the setting nearer the transition. Notice how ordered regions change.',
     connect:
       'Neighbor interactions favor alignment while thermal sampling creates competing disorder.',
-    presets: { quiet: 'Low temperature', threshold: 'Near transition' },
+    presets: { quiet: 'High temperature', threshold: 'Near transition' },
   },
   'cahn-hilliard': {
     observe: 'Follow the boundaries between rich and poor regions as domains coarsen.',

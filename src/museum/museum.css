@@ -935,7 +935,6 @@
   left: 51%;
   width: min(56vw, 47%);
   height: auto;
-  max-height: 74%;
   transform: translateY(-50%);
   object-fit: contain;
   image-rendering: auto;
@@ -1390,7 +1389,7 @@
 .mode-study .field-canvas {
   left: 50%;
   width: min(58%, 38vw);
-  max-height: 76%;
+  transform: translate(-50%, -50%);
 }
 .mode-study .field-legend {
   right: 4%;
@@ -1444,7 +1443,6 @@
   .field-canvas {
     left: 50%;
     width: min(86%, 74vw);
-    max-height: 70%;
     transform: translate(-50%, -50%);
   }
   .field-legend {
@@ -1586,7 +1584,6 @@
     left: 50%;
     width: min(92%, 88vw);
     height: auto;
-    max-height: 62%;
     transform: translate(-50%, -50%);
   }
   .artwork-coordinate {
@@ -1649,7 +1646,7 @@
   .mode-study .field-canvas {
     left: 50%;
     width: min(88%, 78vw);
-    max-height: 64%;
+    transform: translate(-50%, -50%);
   }
   .learning-guide > div {
     grid-template-columns: 58px 1fr;

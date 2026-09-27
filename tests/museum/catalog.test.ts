@@ -54,6 +54,23 @@ describe('DynaMusium catalog', () => {
     }
   });
 
+  it('keeps quantum packet and Ising preset names aligned with their parameters', () => {
+    const packet = works.find((work) => work.slug === 'schrodinger-wave-packet');
+    const ising = works.find((work) => work.slug === 'ising-model');
+
+    expect(learningGuides['schrodinger-wave-packet']?.presets).toEqual({
+      quiet: 'Broad packet',
+      threshold: 'Narrow packet',
+    });
+    expect(packet?.presets.find(({ id }) => id === 'quiet')?.values.width ?? 0).toBeGreaterThan(
+      packet?.presets.find(({ id }) => id === 'threshold')?.values.width ?? 0,
+    );
+    expect(learningGuides['ising-model']?.presets.quiet).toBe('High temperature');
+    expect(
+      ising?.presets.find(({ id }) => id === 'quiet')?.values.temperature ?? 0,
+    ).toBeGreaterThan(ising?.presets.find(({ id }) => id === 'threshold')?.values.temperature ?? 0);
+  });
+
   it('runs every canonical work deterministically without non-finite output', () => {
     for (const work of works) {
       const first = simulateWork(work, {});

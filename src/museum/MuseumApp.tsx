@@ -12,11 +12,14 @@ import {
   numericDomain,
   normalizedZero,
   requireVisualBinding,
+  signedFromBaseline,
   visualLayers,
 } from './semantic-visual.ts';
 import { overflowExcursionStarts, visibleTrajectoryPath } from './trajectory-path.ts';
 
 const flagshipWorks = works.filter((work) => work.tier === 'flagship');
+const collectionPreviewUrl = (slug: string) =>
+  `${import.meta.env.BASE_URL}collection-preview/${slug}.svg`;
 
 function readRoute() {
   const query = new URLSearchParams(window.location.search);
@@ -88,7 +91,7 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
         <div className="hero-orbit hero-orbit-b" aria-hidden="true" />
         <img
           className="entrance-artwork"
-          src="/collection-preview/lorenz-atmosphere.svg"
+          src={collectionPreviewUrl('lorenz-atmosphere')}
           alt=""
           aria-hidden="true"
           fetchPriority="high"
@@ -147,7 +150,7 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
             >
               <img
                 className="collection-preview flagship-preview"
-                src={`/collection-preview/${work.slug}.svg`}
+                src={collectionPreviewUrl(work.slug)}
                 alt=""
                 aria-hidden="true"
                 loading="lazy"
@@ -203,7 +206,7 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
             >
               <img
                 className="collection-preview"
-                src={`/collection-preview/${work.slug}.svg`}
+                src={collectionPreviewUrl(work.slug)}
                 alt=""
                 aria-hidden="true"
                 loading="lazy"
@@ -368,13 +371,6 @@ function resultIndex(result: WorkResult, progress: number) {
 
 function seriesValue(result: WorkResult, id: string, index: number) {
   return result.series.find((series) => series.id === id)?.values[index];
-}
-
-function signedFromBaseline(normalized: number, baseline: number) {
-  if (normalized >= baseline) {
-    return baseline === 1 ? 0 : (normalized - baseline) / (1 - baseline);
-  }
-  return baseline === 0 ? 0 : (normalized - baseline) / baseline;
 }
 
 function SemanticDataError({ message }: { message: string }) {

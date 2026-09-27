@@ -46,6 +46,28 @@ test('field works expose a computed spatial canvas', async ({ page }) => {
   await expect(page.locator('.parameter-drawer')).toContainText('0.055');
 });
 
+test('Study keeps the field centered inside its artwork panel on desktop', async ({ page }) => {
+  await page.goto('/?work=gray-scott&mode=study&preset=canonical');
+  const field = page.locator('.field-canvas');
+  await expect(field).toBeVisible();
+  const geometry = await field.evaluate((canvas) => {
+    const fieldBox = canvas.getBoundingClientRect();
+    const panelBox = canvas.parentElement!.getBoundingClientRect();
+    return {
+      fieldLeft: fieldBox.left,
+      fieldRight: fieldBox.right,
+      fieldCenter: (fieldBox.left + fieldBox.right) / 2,
+      panelLeft: panelBox.left,
+      panelRight: panelBox.right,
+      panelCenter: (panelBox.left + panelBox.right) / 2,
+    };
+  });
+
+  expect(geometry.fieldLeft).toBeGreaterThanOrEqual(geometry.panelLeft);
+  expect(geometry.fieldRight).toBeLessThanOrEqual(geometry.panelRight);
+  expect(Math.abs(geometry.fieldCenter - geometry.panelCenter)).toBeLessThanOrEqual(1);
+});
+
 test('reduced motion freezes presentation while preserving flux evidence', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/?work=fed-reaction-chain&mode=observe&preset=canonical');

@@ -30,6 +30,33 @@ export function visibleTrajectoryPath(points: readonly ScreenTrajectoryPoint[]):
   return commands.join(' ');
 }
 
+/** Reduce path detail while retaining every transition into or out of a clipped run. */
+export function decimateTrajectoryPoints(
+  points: readonly ScreenTrajectoryPoint[],
+  maximumPoints: number,
+): ScreenTrajectoryPoint[] {
+  if (!Number.isInteger(maximumPoints) || maximumPoints < 2) {
+    throw new Error('Trajectory sampling needs a point limit of at least two.');
+  }
+  if (points.length <= maximumPoints) return [...points];
+
+  const selected = new Set<number>();
+  const stride = Math.ceil(points.length / maximumPoints);
+  for (let index = 0; index < points.length; index += stride) selected.add(index);
+  selected.add(points.length - 1);
+
+  points.forEach((point, index) => {
+    assertScreenPoint(point, index);
+    const previous = points[index - 1];
+    if (previous && point.outsideDomain !== previous.outsideDomain) {
+      selected.add(index - 1);
+      selected.add(index);
+    }
+  });
+
+  return [...selected].sort((left, right) => left - right).map((index) => points[index]!);
+}
+
 /** One marker per excursion is sufficient evidence without drawing a border stripe. */
 export function overflowExcursionStarts(
   points: readonly ScreenTrajectoryPoint[],
