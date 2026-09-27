@@ -8,6 +8,7 @@ import {
   numericDomain,
   normalizedZero,
   requireVisualBinding,
+  signedFromBaseline,
   visualLayers,
 } from '../../src/museum/semantic-visual.ts';
 import { simulateWork } from '../../src/museum/simulation.ts';
@@ -54,6 +55,13 @@ function availableQuantityRefs(result: WorkResult): Set<string> {
 }
 
 describe('semantic visual value encoding', () => {
+  it('maps normalized values to signed distance from the visual baseline', () => {
+    expect(signedFromBaseline(0.9593153638248775, 0.5)).toBeCloseTo(0.918630727649755);
+    expect(signedFromBaseline(0.25, 0.5)).toBe(-0.5);
+    expect(signedFromBaseline(1, 1)).toBe(0);
+    expect(signedFromBaseline(0, 0)).toBe(0);
+  });
+
   it.each([
     ['linear', numericBinding('linear', [0, 10]), 2.5, 0.25],
     ['sqrt', numericBinding('sqrt', [0, 100]), 25, 0.5],

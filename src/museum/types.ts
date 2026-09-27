@@ -37,6 +37,13 @@ export interface WorkPreset {
   values: Record<string, number>;
 }
 
+export interface WorkLearningGuide {
+  observe: string;
+  experiment: string;
+  connect: string;
+  presets: { quiet: string; threshold: string };
+}
+
 export interface WorkCitation {
   label: string;
   url: string;

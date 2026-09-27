@@ -17,6 +17,31 @@ test('entrance presents the complete museum and all thirty works', async ({ page
   await expect(page.getByRole('heading', { name: /Enter the living/ })).toBeVisible();
   await expect(page.locator('.flagship-card')).toHaveCount(6);
   await expect(page.locator('.collection-card')).toHaveCount(30);
+  await expect(page.locator('.collection-card[data-work-slug]')).toHaveCount(30);
+  await expect(page.locator('.collection-card .collection-preview')).toHaveCount(30);
+  const previews = page.locator('.collection-card .collection-preview');
+  await previews.evaluateAll((images) => {
+    images.forEach((element) => {
+      (element as HTMLImageElement).loading = 'eager';
+    });
+  });
+  await expect
+    .poll(() =>
+      previews.evaluateAll((images) =>
+        images.every((element) => {
+          const image = element as HTMLImageElement;
+          return image.complete && image.naturalWidth > 0;
+        }),
+      ),
+    )
+    .toBe(true);
+  expect(
+    await page
+      .locator('.collection-card')
+      .evaluateAll(
+        (cards) => new Set(cards.map((card) => card.getAttribute('data-work-slug'))).size,
+      ),
+  ).toBe(30);
   const all = page.getByRole('button', { name: 'All', exact: true });
   const matter = page.getByRole('button', { name: 'Matter & Pattern', exact: true });
   await expect(page.getByRole('group', { name: 'Filter by gallery' })).toBeVisible();
@@ -48,6 +73,9 @@ test('a visitor can enter, pause, scrub, tune, and open the study view', async (
   await expect(page.locator('.study-panel')).toBeVisible();
   await expect(page.locator('.study-panel table')).toBeVisible();
   await expect(page.locator('.study-panel')).toContainText('Numerical provenance');
+  await expect(page.locator('.learning-guide')).toContainText('Look for');
+  await expect(page.locator('.learning-guide')).toContainText('Try');
+  await expect(page.locator('.learning-guide')).toContainText('Connect');
   await expect(page.locator('.study-panel')).toContainText('Visual encoding');
   await expect(page.locator('.study-panel')).toContainText('deterministic replay');
   await expect(page.locator('.study-panel')).toContainText('Definition hash');
@@ -58,8 +86,8 @@ test('deep links restore work, viewing mode, and preset', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Lotka–Volterra' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'study' })).toHaveClass(/is-active/);
   await expect(page.getByRole('button', { name: 'study' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('button', { name: 'Near threshold' })).toHaveClass(/is-active/);
-  await expect(page.getByRole('button', { name: 'Near threshold' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'High predation' })).toHaveClass(/is-active/);
+  await expect(page.getByRole('button', { name: 'High predation' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );

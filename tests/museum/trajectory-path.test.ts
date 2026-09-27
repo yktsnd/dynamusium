@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  decimateTrajectoryPoints,
   overflowExcursionStarts,
   visibleTrajectoryPath,
 } from '../../src/museum/trajectory-path.ts';
@@ -29,5 +30,18 @@ describe('trajectory path clipping', () => {
     ];
 
     expect(overflowExcursionStarts(points)).toEqual([points[0], points[3]]);
+  });
+
+  it('preserves clipped-run boundaries while reducing dense paths', () => {
+    const points = Array.from({ length: 10 }, (_, index) => ({
+      x: index * 10,
+      y: index * 10,
+      outsideDomain: index === 3 || index === 4,
+    }));
+    const sampled = decimateTrajectoryPoints(points, 3);
+
+    expect(visibleTrajectoryPath(sampled)).toBe(
+      'M0.0,0.0 L20.0,20.0 M50.0,50.0 L80.0,80.0 L90.0,90.0',
+    );
   });
 });

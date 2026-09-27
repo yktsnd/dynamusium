@@ -9,6 +9,7 @@ import type {
   WorkParameter,
   WorkPreset,
 } from './types.ts';
+import { learningGuides } from './learning-guides.ts';
 
 export const galleries: Array<{ id: GalleryId; label: string; description: string }> = [
   {
@@ -58,11 +59,19 @@ const parameter = (
   ...(unit === undefined ? {} : { unit }),
 });
 
-const presets = (a: Record<string, number>, b: Record<string, number>): WorkPreset[] => [
-  { id: 'canonical', label: 'Canonical', values: {} },
-  { id: 'quiet', label: 'Quiet regime', values: a },
-  { id: 'threshold', label: 'Near threshold', values: b },
-];
+const presets = (
+  slug: string,
+  a: Record<string, number>,
+  b: Record<string, number>,
+): WorkPreset[] => {
+  const guide = learningGuides[slug];
+  if (!guide) throw new Error(`Missing visitor guide for built-in work "${slug}".`);
+  return [
+    { id: 'canonical', label: 'Reference', values: {} },
+    { id: 'quiet', label: guide.presets.quiet, values: a },
+    { id: 'threshold', label: guide.presets.threshold, values: b },
+  ];
+};
 
 type WorkSeed = Omit<WorkManifestV1, 'schemaVersion' | 'presets' | 'citations'> & {
   quiet: Record<string, number>;
@@ -71,7 +80,7 @@ type WorkSeed = Omit<WorkManifestV1, 'schemaVersion' | 'presets' | 'citations'> 
 };
 
 const defineWork = (seed: WorkSeed): WorkManifestV2 => {
-  const workPresets = presets(seed.quiet, seed.threshold);
+  const workPresets = presets(seed.slug, seed.quiet, seed.threshold);
   const portrait = createPortraitExtension({
     slug: seed.slug,
     kernel: seed.kernel,
@@ -218,7 +227,7 @@ const builtInWorks: WorkManifestV2[] = [
   defineWork({
     slug: 'wave-equation',
     title: 'Wave Equation',
-    subtitle: 'A shape carried without being carried away',
+    subtitle: 'Standing waves between fixed edges',
     gallery: 'motion-chaos',
     runtime: 'field-v1',
     render: 'field',
@@ -228,12 +237,12 @@ const builtInWorks: WorkManifestV2[] = [
     authors: ["Jean le Rond d'Alembert"],
     duration: 18,
     summary:
-      'Disturbances propagate through a continuous medium while local material only oscillates.',
-    question: 'What travels when the medium itself stays near home?',
+      'A two-dimensional standing wave oscillates while its fixed edges and nodal lines stay in place.',
+    question: 'Which parts of a standing wave move, and which remain still?',
     equation: '∂²u/∂t² = c²∇²u',
     parameters: [
       parameter('speed', 'Wave speed', 'c', 0.2, 2, 0.01, 1, 'model unit'),
-      parameter('mode', 'Mode mixture', 'm', 1, 6, 1, 2, 'dimensionless'),
+      parameter('mode', 'Horizontal mode', 'm', 1, 6, 1, 2, 'dimensionless'),
     ],
     quiet: { speed: 0.45, mode: 1 },
     threshold: { speed: 1.65, mode: 5 },

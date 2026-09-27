@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { galleries, works } from '../../src/museum/catalog.ts';
+import { learningGuides } from '../../src/museum/learning-guides.ts';
 import { executeWork } from '../../src/museum/execute-work.ts';
 import { simulateWork } from '../../src/museum/simulation.ts';
 
@@ -36,6 +37,38 @@ describe('DynaMusium catalog', () => {
         ).toBe(true);
       }
     }
+  });
+
+  it('gives every permanent work a complete, specific learning guide and named presets', () => {
+    for (const work of works.slice(0, 30)) {
+      const guide = learningGuides[work.slug];
+      expect(guide, `${work.slug} has a guide`).toBeDefined();
+      expect(guide?.observe.trim().length, `${work.slug} observation`).toBeGreaterThan(20);
+      expect(guide?.experiment.trim().length, `${work.slug} experiment`).toBeGreaterThan(20);
+      expect(guide?.connect.trim().length, `${work.slug} explanation`).toBeGreaterThan(20);
+      expect(
+        work.presets.map((preset) => preset.label),
+        `${work.slug} preset labels`,
+      ).toEqual(['Reference', guide?.presets.quiet, guide?.presets.threshold]);
+      expect(guide?.presets.quiet).not.toBe(guide?.presets.threshold);
+    }
+  });
+
+  it('keeps quantum packet and Ising preset names aligned with their parameters', () => {
+    const packet = works.find((work) => work.slug === 'schrodinger-wave-packet');
+    const ising = works.find((work) => work.slug === 'ising-model');
+
+    expect(learningGuides['schrodinger-wave-packet']?.presets).toEqual({
+      quiet: 'Broad packet',
+      threshold: 'Narrow packet',
+    });
+    expect(packet?.presets.find(({ id }) => id === 'quiet')?.values.width ?? 0).toBeGreaterThan(
+      packet?.presets.find(({ id }) => id === 'threshold')?.values.width ?? 0,
+    );
+    expect(learningGuides['ising-model']?.presets.quiet).toBe('High temperature');
+    expect(
+      ising?.presets.find(({ id }) => id === 'quiet')?.values.temperature ?? 0,
+    ).toBeGreaterThan(ising?.presets.find(({ id }) => id === 'threshold')?.values.temperature ?? 0);
   });
 
   it('runs every canonical work deterministically without non-finite output', () => {

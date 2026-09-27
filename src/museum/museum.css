@@ -184,6 +184,17 @@
   padding: 11vh clamp(24px, 10vw, 170px) 8vh;
   overflow: hidden;
 }
+.entrance-artwork {
+  position: absolute;
+  top: 4%;
+  right: -7%;
+  width: min(68vw, 980px);
+  height: 91%;
+  object-fit: contain;
+  opacity: 0.34;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent, #000 28% 76%, transparent);
+}
 
 .eyebrow {
   margin: 0 0 20px;
@@ -321,7 +332,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 260px;
+  min-height: 300px;
   padding: 24px;
   overflow: hidden;
   color: inherit;
@@ -336,6 +347,36 @@
     transform 220ms ease,
     border-color 220ms ease,
     background 220ms ease;
+}
+.collection-preview {
+  display: block;
+}
+.flagship-preview {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.54;
+  mask-image: linear-gradient(to bottom, #000 8%, rgba(0, 0, 0, 0.75) 48%, transparent 96%);
+  transition:
+    opacity 220ms ease,
+    transform 400ms ease;
+}
+.flagship-card:hover .flagship-preview {
+  opacity: 0.72;
+  transform: scale(1.025);
+}
+.flagship-card > :not(.flagship-preview) {
+  position: relative;
+  z-index: 1;
+}
+.flagship-card .card-index {
+  align-self: flex-start;
+  padding: 5px 7px;
+  background: rgba(2, 9, 20, 0.52);
+  border-radius: 999px;
 }
 .flagship-card::after {
   content: '';
@@ -451,7 +492,7 @@
 .collection-card {
   display: flex;
   flex-direction: column;
-  min-height: 190px;
+  min-height: 250px;
   padding: 24px;
   color: inherit;
   text-align: left;
@@ -462,8 +503,24 @@
   cursor: pointer;
   transition: background 180ms ease;
 }
+.collection-card .collection-preview {
+  width: 100%;
+  height: 112px;
+  object-fit: cover;
+  background: linear-gradient(135deg, rgba(9, 27, 41, 0.78), rgba(3, 10, 19, 0.92));
+  border: 1px solid rgba(144, 217, 239, 0.1);
+  border-radius: 9px;
+  opacity: 0.88;
+  transition:
+    opacity 180ms ease,
+    border-color 180ms ease;
+}
 .collection-card:hover {
   background: rgba(13, 38, 55, 0.78);
+}
+.collection-card:hover .collection-preview {
+  opacity: 1;
+  border-color: rgba(144, 217, 239, 0.3);
 }
 .runtime-label {
   color: #568296;
@@ -472,7 +529,7 @@
   text-transform: uppercase;
 }
 .collection-card strong {
-  margin-top: 25px;
+  margin-top: 16px;
   font: 500 23px/1.1 var(--font-display);
   letter-spacing: -0.025em;
 }
@@ -616,6 +673,9 @@
   background:
     radial-gradient(circle at 62% 44%, rgba(30, 132, 171, 0.13), transparent 30%),
     linear-gradient(180deg, rgba(4, 15, 28, 0.3), rgba(2, 8, 17, 0.82));
+}
+.scientific-artwork.render-field {
+  container-type: size;
 }
 .scientific-artwork[data-atmosphere='museum-ambient']::before {
   content: '';
@@ -874,19 +934,42 @@
 
 .field-canvas {
   position: absolute;
-  top: 12%;
-  right: 6%;
-  bottom: 7%;
-  left: var(--portrait-negative-space, 34%);
-  width: calc(94% - var(--portrait-negative-space, 34%));
-  height: 76%;
-  object-fit: fill;
+  top: 50%;
+  left: 51%;
+  box-sizing: border-box;
+  width: min(56vw, 47%, calc(74cqh * var(--field-aspect)));
+  height: auto;
+  transform: translateY(-50%);
+  object-fit: contain;
   image-rendering: auto;
-  border: 1px solid rgba(140, 223, 247, 0.15);
-  border-radius: 48% 52% 45% 55% / 44% 38% 62% 56%;
-  opacity: 0.88;
-  filter: saturate(1.08) contrast(1.12);
-  box-shadow: 0 0 80px rgba(35, 167, 207, 0.16);
+  border: 1px solid rgba(140, 223, 247, 0.2);
+  border-radius: 3px;
+  opacity: 0.92;
+  filter: contrast(1.06);
+  box-shadow:
+    0 14px 64px rgba(2, 8, 17, 0.38),
+    0 0 36px rgba(35, 167, 207, 0.12);
+}
+.field-legend {
+  position: absolute;
+  right: 7%;
+  bottom: 9%;
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: min(340px, 34%);
+  padding: 8px 10px;
+  color: #a6bfca;
+  background: rgba(3, 12, 23, 0.78);
+  border: 1px solid rgba(144, 217, 239, 0.15);
+  border-radius: 4px;
+  font: 500 9px/1.2 var(--font-mono);
+}
+.field-legend i {
+  height: 7px;
+  background: linear-gradient(90deg, #070f23, #38377a 52%, #cdf4ff);
+  border-radius: 999px;
 }
 .field-overflow {
   position: absolute;
@@ -1071,17 +1154,40 @@
 }
 
 .study-panel {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(390px, 42vw);
+  position: relative;
+  min-width: 0;
+  width: auto;
   padding: 28px;
-  overflow: auto;
+  overflow: visible;
   background: rgba(4, 16, 28, 0.93);
-  border-left: 1px solid rgba(144, 221, 241, 0.13);
+  border: 1px solid rgba(144, 221, 241, 0.13);
+  border-radius: 8px;
   backdrop-filter: blur(24px);
+}
+.learning-guide {
+  display: grid;
+  gap: 15px;
+  padding: 18px;
+  background: linear-gradient(145deg, rgba(14, 38, 54, 0.82), rgba(5, 17, 30, 0.72));
+  border: 1px solid rgba(130, 210, 233, 0.19);
+  border-radius: 6px;
+}
+.learning-guide .eyebrow {
+  margin: 0;
+}
+.learning-guide > div {
+  display: grid;
+  grid-template-columns: 66px 1fr;
+  gap: 12px;
+}
+.learning-guide strong {
+  color: #8dd9eb;
+  font: 600 9px/1.6 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.learning-guide p {
+  margin: 0;
 }
 .study-panel section + section {
   margin-top: 28px;
@@ -1246,6 +1352,60 @@
   text-align: left;
 }
 
+.mode-study.work-experience {
+  grid-template-rows: 66px auto 150px auto auto;
+  overflow: visible;
+}
+.mode-study .work-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  grid-template-rows: auto minmax(360px, 1fr);
+  gap: 16px;
+  min-height: 0;
+  padding: 24px clamp(18px, 3vw, 40px);
+  overflow: visible;
+}
+.mode-study .work-caption {
+  position: relative;
+  top: auto;
+  left: auto;
+  grid-column: 1;
+  grid-row: 1;
+  max-width: none;
+  padding: 8px 0 12px;
+}
+.mode-study .scientific-artwork {
+  position: relative;
+  inset: auto;
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 360px;
+  height: 100%;
+  border: 1px solid rgba(144, 221, 241, 0.12);
+  border-radius: 8px;
+}
+.mode-study .scientific-artwork svg {
+  left: 8%;
+  right: 4%;
+  width: auto;
+  height: 88%;
+}
+.mode-study .field-canvas {
+  left: 50%;
+  width: min(58%, 38vw, calc(76cqh * var(--field-aspect)));
+  transform: translate(-50%, -50%);
+}
+.mode-study .field-legend {
+  right: 4%;
+  bottom: 6%;
+}
+.mode-study .study-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  max-height: none;
+}
+
 .mode-exhibit .work-header,
 .mode-exhibit .work-controls,
 .mode-exhibit .parameter-drawer,
@@ -1285,8 +1445,15 @@
     left: 20%;
   }
   .field-canvas {
-    left: 22%;
-    width: 72%;
+    left: 50%;
+    width: min(86%, 74vw, calc(70cqh * var(--field-aspect)));
+    transform: translate(-50%, -50%);
+  }
+  .field-legend {
+    right: 50%;
+    bottom: 7%;
+    width: min(320px, 82%);
+    transform: translateX(50%);
   }
   .work-caption {
     left: 24px;
@@ -1353,11 +1520,17 @@
     grid-column: auto;
     min-height: 210px;
   }
+  .flagship-preview {
+    opacity: 0.42;
+  }
   .collection-grid {
     grid-template-columns: 1fr;
   }
   .collection-card {
-    min-height: 165px;
+    min-height: 235px;
+  }
+  .collection-card .collection-preview {
+    height: 132px;
   }
   .museum-footer {
     grid-template-columns: auto 1fr;
@@ -1409,9 +1582,13 @@
     height: 67%;
   }
   .field-canvas {
-    inset: 32% 4% 5%;
-    width: 92%;
-    height: 60%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: min(92%, 88vw, calc(62cqh * var(--field-aspect)));
+    height: auto;
+    transform: translate(-50%, -50%);
   }
   .artwork-coordinate {
     display: none;
@@ -1451,14 +1628,40 @@
     border-left: 0;
   }
   .mode-study .work-stage {
-    min-height: 330px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(330px, 44vh) auto;
+    gap: 12px;
+    min-height: 0;
+    padding: 18px;
     overflow: visible;
   }
   .mode-study .scientific-artwork {
-    height: 330px;
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 330px;
+    height: auto;
   }
   .mode-study .study-panel {
-    margin-top: 330px;
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 0;
+    padding: 20px;
+  }
+  .mode-study .field-canvas {
+    left: 50%;
+    width: min(88%, 78vw, calc(64cqh * var(--field-aspect)));
+    transform: translate(-50%, -50%);
+  }
+  .learning-guide > div {
+    grid-template-columns: 58px 1fr;
+    gap: 8px;
+  }
+  .entrance-artwork {
+    top: 15%;
+    right: -35%;
+    width: 112vw;
+    height: 68%;
+    opacity: 0.23;
   }
   .mode-study.work-experience {
     grid-template-rows: 58px auto 120px auto auto;

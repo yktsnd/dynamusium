@@ -126,6 +126,13 @@ export function normalizedZero(binding: ChannelBinding): number | null {
   return encodeNumericValue(binding.zero, bindingWithoutZero).normalized;
 }
 
+export function signedFromBaseline(normalized: number, baseline: number): number {
+  if (normalized >= baseline) {
+    return baseline === 1 ? 0 : (normalized - baseline) / (1 - baseline);
+  }
+  return baseline === 0 ? 0 : (normalized - baseline) / baseline;
+}
+
 export function describeBinding(binding: ChannelBinding): string {
   const domain = binding.domain.join(' … ');
   const unit = binding.unit ? ` ${binding.unit}` : '';

@@ -38,9 +38,9 @@ test('tablet preset controls retain visible labels and usable targets', async ({
     expect(box?.width).toBeGreaterThanOrEqual(24);
     expect(box?.height).toBeGreaterThanOrEqual(24);
   }
-  await expect(page.getByRole('button', { name: 'Canonical' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Quiet regime' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Near threshold' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reference' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Steady regime' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Near transition' })).toBeVisible();
 });
 
 test('wide-screen graph never intercepts the simulation controls', async ({ page }) => {
@@ -49,8 +49,8 @@ test('wide-screen graph never intercepts the simulation controls', async ({ page
 
   await page.getByRole('button', { name: /Pause/ }).click();
   await page.getByRole('slider', { name: 'Time' }).fill('0.5');
-  await page.getByRole('button', { name: 'Near threshold' }).click();
-  await expect(page.getByRole('button', { name: 'Near threshold' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Near transition' }).click();
+  await expect(page.getByRole('button', { name: 'Near transition' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
