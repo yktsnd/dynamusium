@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { galleries, works } from '../../src/museum/catalog.ts';
+import { learningGuides } from '../../src/museum/learning-guides.ts';
 import { executeWork } from '../../src/museum/execute-work.ts';
 import { simulateWork } from '../../src/museum/simulation.ts';
 
@@ -35,6 +36,21 @@ describe('DynaMusium catalog', () => {
           `${work.slug}/${parameter.id} is missing a declared unit`,
         ).toBe(true);
       }
+    }
+  });
+
+  it('gives every permanent work a complete, specific learning guide and named presets', () => {
+    for (const work of works.slice(0, 30)) {
+      const guide = learningGuides[work.slug];
+      expect(guide, `${work.slug} has a guide`).toBeDefined();
+      expect(guide?.observe.trim().length, `${work.slug} observation`).toBeGreaterThan(20);
+      expect(guide?.experiment.trim().length, `${work.slug} experiment`).toBeGreaterThan(20);
+      expect(guide?.connect.trim().length, `${work.slug} explanation`).toBeGreaterThan(20);
+      expect(
+        work.presets.map((preset) => preset.label),
+        `${work.slug} preset labels`,
+      ).toEqual(['Reference', guide?.presets.quiet, guide?.presets.threshold]);
+      expect(guide?.presets.quiet).not.toBe(guide?.presets.threshold);
     }
   });
 

@@ -26,7 +26,22 @@ test('field works expose a computed spatial canvas', async ({ page }) => {
   await expect(field).toBeVisible();
   await expect(field).toHaveAttribute('aria-label', /Computed v spatial field/);
   await expect(field).toHaveAttribute('data-overflow', '0');
+  await expect(page.locator('.field-legend')).toHaveAttribute(
+    'aria-label',
+    /Linear luminance scale/,
+  );
   await expect(field).toHaveCSS('width', /[1-9][0-9]{2}/);
+  const aspectRatio = await field.evaluate((canvas) => {
+    const bounds = canvas.getBoundingClientRect();
+    return bounds.width / bounds.height;
+  });
+  expect(aspectRatio).toBeCloseTo(48 / 32, 1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileRatio = await field.evaluate((canvas) => {
+    const bounds = canvas.getBoundingClientRect();
+    return bounds.width / bounds.height;
+  });
+  expect(mobileRatio).toBeCloseTo(48 / 32, 1);
   await page.getByRole('slider', { name: /Feed/ }).fill('0.055');
   await expect(page.locator('.parameter-drawer')).toContainText('0.055');
 });

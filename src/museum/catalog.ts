@@ -9,6 +9,7 @@ import type {
   WorkParameter,
   WorkPreset,
 } from './types.ts';
+import { learningGuides } from './learning-guides.ts';
 
 export const galleries: Array<{ id: GalleryId; label: string; description: string }> = [
   {
@@ -58,11 +59,19 @@ const parameter = (
   ...(unit === undefined ? {} : { unit }),
 });
 
-const presets = (a: Record<string, number>, b: Record<string, number>): WorkPreset[] => [
-  { id: 'canonical', label: 'Canonical', values: {} },
-  { id: 'quiet', label: 'Quiet regime', values: a },
-  { id: 'threshold', label: 'Near threshold', values: b },
-];
+const presets = (
+  slug: string,
+  a: Record<string, number>,
+  b: Record<string, number>,
+): WorkPreset[] => {
+  const guide = learningGuides[slug];
+  if (!guide) throw new Error(`Missing visitor guide for built-in work "${slug}".`);
+  return [
+    { id: 'canonical', label: 'Reference', values: {} },
+    { id: 'quiet', label: guide.presets.quiet, values: a },
+    { id: 'threshold', label: guide.presets.threshold, values: b },
+  ];
+};
 
 type WorkSeed = Omit<WorkManifestV1, 'schemaVersion' | 'presets' | 'citations'> & {
   quiet: Record<string, number>;
@@ -71,7 +80,7 @@ type WorkSeed = Omit<WorkManifestV1, 'schemaVersion' | 'presets' | 'citations'> 
 };
 
 const defineWork = (seed: WorkSeed): WorkManifestV2 => {
-  const workPresets = presets(seed.quiet, seed.threshold);
+  const workPresets = presets(seed.slug, seed.quiet, seed.threshold);
   const portrait = createPortraitExtension({
     slug: seed.slug,
     kernel: seed.kernel,

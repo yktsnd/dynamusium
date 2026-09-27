@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { galleries, workBySlug, works } from './catalog.ts';
+import { learningGuides } from './learning-guides.ts';
 import type { WorkRunResult } from './portrait-types.ts';
 import type { GalleryId, MuseumMode, Series, WorkManifest, WorkResult } from './types.ts';
 import { useWorkSimulation } from './useWorkSimulation.ts';
@@ -85,6 +86,13 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
       <section className="entrance-hero">
         <div className="hero-orbit hero-orbit-a" aria-hidden="true" />
         <div className="hero-orbit hero-orbit-b" aria-hidden="true" />
+        <img
+          className="entrance-artwork"
+          src="/collection-preview/lorenz-atmosphere.svg"
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+        />
         <p className="eyebrow">An archive of systems that move, grow, synchronize, and transform</p>
         <h1>
           Enter the living
@@ -92,8 +100,8 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
           <em>mathematics</em> of nature.
         </h1>
         <p className="hero-copy">
-          Thirty landmark models from motion, matter, life, Earth, and the cosmos—presented as
-          instruments to observe, not diagrams to merely read.
+          Thirty mathematical models from motion, matter, life, Earth, and the cosmos—each one
+          something to observe, test, and understand.
         </p>
         <div className="hero-actions">
           <button
@@ -137,6 +145,13 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
               key={work.slug}
               onClick={() => onSelect(work.slug)}
             >
+              <img
+                className="collection-preview flagship-preview"
+                src={`/collection-preview/${work.slug}.svg`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+              />
               <span className="card-index">0{index + 1}</span>
               <span className="card-gallery">
                 {galleries.find((item) => item.id === work.gallery)?.label}
@@ -182,9 +197,17 @@ function Entrance({ onSelect }: { onSelect: (slug: string) => void }) {
             <button
               className="collection-card"
               type="button"
+              data-work-slug={work.slug}
               key={work.slug}
               onClick={() => onSelect(work.slug)}
             >
+              <img
+                className="collection-preview"
+                src={`/collection-preview/${work.slug}.svg`}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+              />
               <span className="runtime-label">
                 {work.runtime.replace('-v1', '')}
                 {work.schemaVersion === 2
@@ -312,12 +335,24 @@ function FieldCanvas({
       <canvas
         ref={canvas}
         className="field-canvas"
+        style={{ aspectRatio: `${result.field?.columns ?? 1} / ${result.field?.rows ?? 1}` }}
         aria-label={`Computed ${componentId} spatial field. ${describeBinding(binding)}. ${
           overflowCount === 0
             ? 'All cells are within the declared scale.'
             : `${overflowCount} cells are outside the declared scale and visibly reported.`
         }`}
       />
+      <div
+        className="field-legend"
+        role="img"
+        aria-label={`Linear luminance scale for ${componentId}, from ${minimum} to ${maximum}.`}
+      >
+        <span>{componentId}</span>
+        <i aria-hidden="true" />
+        <span>
+          {minimum.toPrecision(3)}–{maximum.toPrecision(3)}
+        </span>
+      </div>
       {overflowCount > 0 && (
         <p className="field-overflow" role="status">
           {overflowCount} cells outside [{minimum}, {maximum}]
@@ -983,6 +1018,23 @@ function StudyPanel({
         <p>{work.summary}</p>
         <blockquote>{work.question}</blockquote>
       </section>
+      {learningGuides[work.slug] && (
+        <section className="learning-guide" aria-label={`A guide to ${work.title}`}>
+          <p className="eyebrow">A way into the work</p>
+          <div>
+            <strong>Look for</strong>
+            <p>{learningGuides[work.slug]!.observe}</p>
+          </div>
+          <div>
+            <strong>Try</strong>
+            <p>{learningGuides[work.slug]!.experiment}</p>
+          </div>
+          <div>
+            <strong>Connect</strong>
+            <p>{learningGuides[work.slug]!.connect}</p>
+          </div>
+        </section>
+      )}
       <section>
         <p className="eyebrow">Model</p>
         <code>{work.equation}</code>

@@ -25,6 +25,7 @@
     "work:validate": "node scripts/validate-works.mjs",
     "work:preview": "vite",
     "work:capture": "node scripts/capture-screens.mjs",
+    "work:capture-previews": "node scripts/capture-collection-previews.mjs",
     "cite:verify": "node scripts/verify-citations.mjs"
   },
   "dependencies": {
