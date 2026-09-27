@@ -674,6 +674,9 @@
     radial-gradient(circle at 62% 44%, rgba(30, 132, 171, 0.13), transparent 30%),
     linear-gradient(180deg, rgba(4, 15, 28, 0.3), rgba(2, 8, 17, 0.82));
 }
+.scientific-artwork.render-field {
+  container-type: size;
+}
 .scientific-artwork[data-atmosphere='museum-ambient']::before {
   content: '';
   position: absolute;
@@ -933,7 +936,8 @@
   position: absolute;
   top: 50%;
   left: 51%;
-  width: min(56vw, 47%);
+  box-sizing: border-box;
+  width: min(56vw, 47%, calc(74cqh * var(--field-aspect)));
   height: auto;
   transform: translateY(-50%);
   object-fit: contain;
@@ -1388,7 +1392,7 @@
 }
 .mode-study .field-canvas {
   left: 50%;
-  width: min(58%, 38vw);
+  width: min(58%, 38vw, calc(76cqh * var(--field-aspect)));
   transform: translate(-50%, -50%);
 }
 .mode-study .field-legend {
@@ -1442,7 +1446,7 @@
   }
   .field-canvas {
     left: 50%;
-    width: min(86%, 74vw);
+    width: min(86%, 74vw, calc(70cqh * var(--field-aspect)));
     transform: translate(-50%, -50%);
   }
   .field-legend {
@@ -1582,7 +1586,7 @@
     right: auto;
     bottom: auto;
     left: 50%;
-    width: min(92%, 88vw);
+    width: min(92%, 88vw, calc(62cqh * var(--field-aspect)));
     height: auto;
     transform: translate(-50%, -50%);
   }
@@ -1645,7 +1649,7 @@
   }
   .mode-study .field-canvas {
     left: 50%;
-    width: min(88%, 78vw);
+    width: min(88%, 78vw, calc(64cqh * var(--field-aspect)));
     transform: translate(-50%, -50%);
   }
   .learning-guide > div {

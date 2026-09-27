@@ -35,12 +35,12 @@ export const learningGuides: Record<string, WorkLearningGuide> = {
   },
   'wave-equation': {
     observe:
-      'Watch a localized displacement travel across the string without moving the whole string with it.',
+      'Watch where the displacement stays at zero while the two-dimensional pattern oscillates.',
     experiment:
-      'Compare the broad and fine initial shapes. Notice how their spatial scales travel.',
+      'Compare the lower and higher spatial modes. Count the nodal bands that stay in place.',
     connect:
-      'The wave equation couples the rate of change in time to curvature in space, carrying shape at a finite speed.',
-    presets: { quiet: 'Broad initial shape', threshold: 'Fine initial shape' },
+      'Fixed edges support standing waves: the field moves up and down, but its nodal lines remain fixed.',
+    presets: { quiet: 'Lower spatial mode', threshold: 'Higher spatial mode' },
   },
   'standard-map': {
     observe: 'Separate the islands of regular motion from the surrounding scattered points.',
@@ -146,7 +146,7 @@ export const learningGuides: Record<string, WorkLearningGuide> = {
   'lorenz-atmosphere': {
     observe: 'Watch the orbit switch between lobes; the path is a finite computed segment.',
     experiment:
-      'Compare the steady setting with the setting near the transition. Then change the initial state slightly to test predictability.',
+      'Compare the steady and near-transition presets. Then vary thermal forcing slightly and watch how the path responds.',
     connect:
       'The three equations are a simplified convection model. Deterministic rules can still amplify small initial differences.',
     presets: { quiet: 'Steady regime', threshold: 'Near transition' },

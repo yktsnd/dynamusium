@@ -338,7 +338,12 @@ function FieldCanvas({
       <canvas
         ref={canvas}
         className="field-canvas"
-        style={{ aspectRatio: `${result.field?.columns ?? 1} / ${result.field?.rows ?? 1}` }}
+        style={
+          {
+            aspectRatio: `${result.field?.columns ?? 1} / ${result.field?.rows ?? 1}`,
+            '--field-aspect': (result.field?.columns ?? 1) / (result.field?.rows ?? 1),
+          } as CSSProperties
+        }
         aria-label={`Computed ${componentId} spatial field. ${describeBinding(binding)}. ${
           overflowCount === 0
             ? 'All cells are within the declared scale.'
